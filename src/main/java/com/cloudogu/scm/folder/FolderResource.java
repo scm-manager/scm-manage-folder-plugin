@@ -25,10 +25,4 @@
 package com.cloudogu.scm.folder;
 
 public class FolderResource {
-
-  public static final String SOMETHING = "something";
-
-  String doSomething() {
-    return SOMETHING;
-  }
 }
