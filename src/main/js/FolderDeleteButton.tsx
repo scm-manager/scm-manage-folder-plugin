@@ -22,10 +22,12 @@
  * SOFTWARE.
  */
 import React, { FC, useState } from "react";
-import { File, Repository } from "@scm-manager/ui-types";
+import { File, Link, Repository } from "@scm-manager/ui-types";
 import { useTranslation } from "react-i18next";
 import styled from "styled-components";
 import FolderDeleteModal from "./FolderDeleteModal";
+import { CommitDto } from "./types";
+import { apiClient } from "@scm-manager/ui-components";
 
 const Button = styled.span`
   width: 50px;
@@ -50,7 +52,18 @@ const FolderDeleteButton: FC<Props> = ({ sources, path, revision }) => {
     return null;
   }
 
-  const submit = () => {};
+  const submit = (message: string) => {
+    const createLink = (sources._links.deleteFolder as Link).href;
+    const payload: CommitDto = {
+      commitMessage: message,
+      branch: revision || ""
+      // expectedRevision: sources.revision
+    };
+    apiClient
+      .post(createLink, payload)
+      .then(() => setModalVisible(false))
+      .catch(console.log);
+  };
 
   return (
     <>

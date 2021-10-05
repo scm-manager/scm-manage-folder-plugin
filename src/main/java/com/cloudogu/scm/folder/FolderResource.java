@@ -57,20 +57,9 @@ public class FolderResource {
   public Response createFolder(@PathParam("namespace") String namespace,
                                @PathParam("name") String name,
                                @Nullable @PathParam("path") String path,
-                               @Valid CreateFolderDto dto) throws IOException {
-    folderService.create(namespace, name, dto.getBranch(), path, dto.getFolderName(), dto.getCommitMessage(), dto.getExpectedRevision());
-    return Response.status(CREATED).entity(dto).build();
-  }
-
-  @POST
-  @Path("{namespace}/{name}/create")
-  @Consumes(MediaType.APPLICATION_JSON)
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response createFolderInRoot(@PathParam("namespace") String namespace,
-                               @PathParam("name") String name,
-                               @Valid CreateFolderDto dto) throws IOException {
-    folderService.create(namespace, name, dto.getBranch(), "", dto.getFolderName(), dto.getCommitMessage(), dto.getExpectedRevision());
-    return Response.status(CREATED).entity(dto).build();
+                               @Valid CommitDto dto) throws IOException {
+    folderService.create(namespace, name, dto.getBranch(), path, dto.getCommitMessage());
+    return Response.status(CREATED).build();
   }
 
   @POST
@@ -80,9 +69,9 @@ public class FolderResource {
   public Response deleteFolder(@PathParam("namespace") String namespace,
                                @PathParam("name") String name,
                                @Nullable @PathParam("path") String path,
-                               @Valid CreateFolderDto dto) throws IOException {
-    folderService.create(namespace, name, dto.getBranch(), path, dto.getFolderName(), dto.getCommitMessage(), dto.getExpectedRevision());
-    return Response.status(NO_CONTENT).entity(dto).build();
+                               @Valid CommitDto dto) throws IOException {
+    folderService.delete(namespace, name, dto.getBranch(), path, dto.getCommitMessage());
+    return Response.status(NO_CONTENT).build();
   }
 
 }

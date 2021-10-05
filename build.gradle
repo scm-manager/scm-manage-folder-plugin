@@ -27,14 +27,10 @@ plugins {
   id 'org.scm-manager.smp' version '0.8.5'
 }
 
-dependencies {
-  // define dependencies to other plugins here e.g.:
-  // plugin "sonia.scm.plugins:scm-mail-plugin:2.1.0"
-  // optionalPlugin "sonia.scm.plugins:scm-editor-plugin:2.0.0"
-}
+dependencies {}
 
 scmPlugin {
-  scmVersion = "2.0.0"
+  scmVersion = "2.21.0"
   displayName = "Manage Folder Plugin"
   description = "Manage folders through the web interface."
 

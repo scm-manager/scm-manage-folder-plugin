@@ -26,7 +26,7 @@ import { File, Repository, Link } from "@scm-manager/ui-types";
 import { useTranslation } from "react-i18next";
 import styled from "styled-components";
 import FolderCreateModal from "./FolderCreateModal";
-import { CreateFolderDto } from "./types";
+import { CommitDto } from "./types";
 import { apiClient } from "@scm-manager/ui-components";
 
 const Button = styled.span`
@@ -53,9 +53,8 @@ const FolderCreateButton: FC<Props> = ({ sources, path, revision }) => {
   }
 
   const submit = ({ name, message }: { name: string; message: string }) => {
-    const createLink = (sources._links.createFolder as Link).href.replace("{path}", path || "");
-    const payload: CreateFolderDto = {
-      folderName: name,
+    const createLink = (sources._links.createFolder as Link).href.replace("{path}", name);
+    const payload: CommitDto = {
       commitMessage: message,
       branch: revision || ""
     };

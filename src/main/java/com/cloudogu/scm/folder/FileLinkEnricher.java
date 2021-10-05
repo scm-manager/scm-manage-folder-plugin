@@ -30,9 +30,11 @@ import sonia.scm.api.v2.resources.HalEnricherContext;
 import sonia.scm.api.v2.resources.LinkBuilder;
 import sonia.scm.api.v2.resources.ScmPathInfoStore;
 import sonia.scm.plugin.Extension;
-import sonia.scm.repository.BrowserResult;
 import sonia.scm.repository.FileObject;
 import sonia.scm.repository.NamespaceAndName;
+import sonia.scm.repository.RepositoryPermissions;
+import sonia.scm.repository.api.RepositoryService;
+import sonia.scm.repository.api.RepositoryServiceFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -41,52 +43,36 @@ import javax.inject.Provider;
 @Enrich(FileObject.class)
 public class FileLinkEnricher implements HalEnricher {
 
+  private final RepositoryServiceFactory repositoryServiceFactory;
   private final Provider<ScmPathInfoStore> scmPathInfoStore;
-  private final EditorPreconditions editorPreconditions;
-  private final ChangeGuardCheck changeGuardCheck;
 
   @Inject
-  public FileLinkEnricher(Provider<ScmPathInfoStore> scmPathInfoStore, EditorPreconditions editorPreconditions, ChangeGuardCheck changeGuardCheck) {
+  public FileLinkEnricher(RepositoryServiceFactory repositoryServiceFactory, Provider<ScmPathInfoStore> scmPathInfoStore) {
+    this.repositoryServiceFactory = repositoryServiceFactory;
     this.scmPathInfoStore = scmPathInfoStore;
-    this.editorPreconditions = editorPreconditions;
-    this.changeGuardCheck = changeGuardCheck;
   }
 
   @Override
   public void enrich(HalEnricherContext context, HalAppender appender) {
     NamespaceAndName namespaceAndName = context.oneRequireByType(NamespaceAndName.class);
-    BrowserResult browserResult = context.oneRequireByType(BrowserResult.class);
     FileObject fileObject = context.oneRequireByType(FileObject.class);
-    if (editorPreconditions.isEditable(namespaceAndName, browserResult)) {
-      appendLinks(appender, fileObject, namespaceAndName, browserResult.getRequestedRevision());
-    }
-  }
 
-  private void appendLinks(HalAppender appender, FileObject fileObject, NamespaceAndName namespaceAndName, String revision) {
     if (fileObject.isDirectory()) {
-      appendDirectoryLinks(appender, fileObject, namespaceAndName, revision);
+      try (RepositoryService repositoryService = repositoryServiceFactory.create(namespaceAndName)) {
+        if (RepositoryPermissions.push(repositoryService.getRepository()).isPermitted()) {
+          LinkBuilder linkBuilder = new LinkBuilder(scmPathInfoStore.get().get(), FolderResource.class);
+
+          appender.appendLink("createFolder", linkBuilder
+            .method("createFolder")
+            .parameters(namespaceAndName.getNamespace(), namespaceAndName.getName(), "PATH_PART").href().replace("PATH_PART", fileObject.getPath() + "/{path}")
+          );
+
+          appender.appendLink("deleteFolder", linkBuilder
+            .method("deleteFolder")
+            .parameters(namespaceAndName.getNamespace(), namespaceAndName.getName(), fileObject.getPath()).href()
+          );
+        }
+      }
     }
-  }
-
-  private void appendDirectoryLinks(HalAppender appender, FileObject fileObject, NamespaceAndName namespaceAndName, String revision) {
-    LinkBuilder linkBuilder = new LinkBuilder(scmPathInfoStore.get().get(), FolderResource.class);
-    if (changeGuardCheck.canCreateFilesIn(namespaceAndName, revision, fileObject.getPath()).isEmpty()) {
-      appender.appendLink("createFolder", createCreateLink(fileObject, namespaceAndName, linkBuilder));
-    }
-    if (changeGuardCheck.isDeletable(namespaceAndName, revision, fileObject.getPath()).isEmpty()) {
-      appender.appendLink("deleteFolder", createDeleteLink(fileObject, namespaceAndName, linkBuilder));
-    }
-  }
-
-  private String createCreateLink(FileObject fileObject, NamespaceAndName namespaceAndName, LinkBuilder linkBuilder) {
-    return createModifyLink("createFolder", fileObject.getPath(), namespaceAndName, linkBuilder);
-  }
-
-  private String createDeleteLink(FileObject fileObject, NamespaceAndName namespaceAndName, LinkBuilder linkBuilder) {
-    return createModifyLink("deleteFolder", fileObject.getPath(), namespaceAndName, linkBuilder);
-  }
-
-  private String createModifyLink(String method, String path, NamespaceAndName namespaceAndName, LinkBuilder linkBuilder) {
-    return linkBuilder.method(method).parameters(namespaceAndName.getNamespace(), namespaceAndName.getName(), path).href();
   }
 }

@@ -40,5 +40,4 @@ public class CommitDto {
   @Size(min = 1)
   private String commitMessage;
   private String branch;
-  private String expectedRevision;
 }
