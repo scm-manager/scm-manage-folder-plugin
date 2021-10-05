@@ -24,6 +24,12 @@
 
 package com.cloudogu.scm.folder;
 
+import sonia.scm.api.v2.resources.ChangesetDto;
+import sonia.scm.api.v2.resources.ChangesetToChangesetDtoMapper;
+import sonia.scm.repository.Changeset;
+import sonia.scm.repository.NamespaceAndName;
+import sonia.scm.repository.RepositoryManager;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -44,10 +50,14 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 public class FolderResource {
 
   private final FolderService folderService;
+  private final ChangesetToChangesetDtoMapper changesetMapper;
+  private final RepositoryManager repositoryManager;
 
   @Inject
-  FolderResource(FolderService folderService) {
+  FolderResource(FolderService folderService, ChangesetToChangesetDtoMapper changesetMapper, RepositoryManager repositoryManager) {
     this.folderService = folderService;
+    this.changesetMapper = changesetMapper;
+    this.repositoryManager = repositoryManager;
   }
 
   @POST
@@ -58,8 +68,9 @@ public class FolderResource {
                                @PathParam("name") String name,
                                @Nullable @PathParam("path") String path,
                                @Valid CommitDto dto) throws IOException {
-    folderService.create(namespace, name, dto.getBranch(), path, dto.getCommitMessage());
-    return Response.status(CREATED).build();
+    final Changeset newCommit = folderService.create(namespace, name, dto.getBranch(), path, dto.getCommitMessage());
+    ChangesetDto newCommitDto = changesetMapper.map(newCommit, repositoryManager.get(new NamespaceAndName(namespace, name)));
+    return Response.status(CREATED).entity(newCommitDto).build();
   }
 
   @POST
@@ -70,8 +81,9 @@ public class FolderResource {
                                @PathParam("name") String name,
                                @Nullable @PathParam("path") String path,
                                @Valid CommitDto dto) throws IOException {
-    folderService.delete(namespace, name, dto.getBranch(), path, dto.getCommitMessage());
-    return Response.status(NO_CONTENT).build();
+    final Changeset newCommit = folderService.delete(namespace, name, dto.getBranch(), path, dto.getCommitMessage());
+    ChangesetDto newCommitDto = changesetMapper.map(newCommit, repositoryManager.get(new NamespaceAndName(namespace, name)));
+    return Response.status(CREATED).entity(newCommitDto).build();
   }
 
 }

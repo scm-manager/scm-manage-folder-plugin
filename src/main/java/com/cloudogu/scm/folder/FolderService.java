@@ -5,11 +5,13 @@ import org.apache.commons.lang.StringUtils;
 import sonia.scm.ContextEntry;
 import sonia.scm.repository.Branch;
 import sonia.scm.repository.BrowserResult;
+import sonia.scm.repository.Changeset;
 import sonia.scm.repository.FileObject;
 import sonia.scm.repository.NamespaceAndName;
 import sonia.scm.repository.Repository;
 import sonia.scm.repository.RepositoryPermissions;
 import sonia.scm.repository.api.BrowseCommandBuilder;
+import sonia.scm.repository.api.LogCommandBuilder;
 import sonia.scm.repository.api.ModifyCommandBuilder;
 import sonia.scm.repository.api.RepositoryService;
 import sonia.scm.repository.api.RepositoryServiceFactory;
@@ -33,7 +35,7 @@ public class FolderService {
     this.repositoryServiceFactory = repositoryServiceFactory;
   }
 
-  void create(String namespace, String repositoryName, String branch, String path, String commitMessage) throws IOException {
+  Changeset create(String namespace, String repositoryName, String branch, String path, String commitMessage) throws IOException {
     // validate path
     doThrow()
       .violation("invalid path: ", path)
@@ -48,14 +50,19 @@ public class FolderService {
       }
       modifyCommand.setCommitMessage(commitMessage);
       modifyCommand
-        .createFile(path + KEEP_FILE_NAME)
+        .createFile(ensureTrailingSlash(path) + KEEP_FILE_NAME)
         .setOverwrite(true)
         .withData(KEEP_FILE_CONTENT);
-      modifyCommand.execute();
+      String changesetId = modifyCommand.execute();
+      LogCommandBuilder logCommand = repositoryService.getLogCommand();
+      if (!Strings.isNullOrEmpty(branch)) {
+        logCommand.setBranch(branch);
+      }
+      return logCommand.getChangeset(changesetId);
     }
   }
 
-  void delete(String namespace, String repositoryName, @CheckForNull String branch, String path, String commitMessage) throws IOException {
+  Changeset delete(String namespace, String repositoryName, @CheckForNull String branch, String path, String commitMessage) throws IOException {
     // validate path
     doThrow()
       .violation("invalid path: ", path)
@@ -98,7 +105,12 @@ public class FolderService {
         modifyCommand.setBranch(branch);
       }
       modifyCommand.setCommitMessage(commitMessage);
-      modifyCommand.execute();
+      String changesetId = modifyCommand.execute();
+      LogCommandBuilder logCommand = repositoryService.getLogCommand();
+      if (!Strings.isNullOrEmpty(branch)) {
+        logCommand.setBranch(branch);
+      }
+      return logCommand.getChangeset(changesetId);
     }
   }
 
@@ -109,5 +121,12 @@ public class FolderService {
       }
     }
     modifyCommand.deleteFile(file.getPath());
+  }
+
+  private String ensureTrailingSlash(String path) {
+    if (!path.endsWith("/")) {
+      return path + "/";
+    }
+    return path;
   }
 }

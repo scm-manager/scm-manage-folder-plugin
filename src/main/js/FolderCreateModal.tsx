@@ -1,5 +1,5 @@
 import React, { FC, useState } from "react";
-import { ButtonGroup, InputField, Modal, Textarea, Button } from "@scm-manager/ui-components";
+import { ButtonGroup, InputField, Modal, Textarea, Button, CommitAuthor } from "@scm-manager/ui-components";
 import { useTranslation } from "react-i18next";
 import { File } from "@scm-manager/ui-types";
 
@@ -23,15 +23,15 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, onClose, onSubmit }) 
 
   const body = (
     <>
+      <InputField label={t("scm-manage-folder-plugin.create.branch.label")} value={revision} disabled={true} />
       <InputField label={t("scm-manage-folder-plugin.create.path.label")} value={"/" + sources.path} disabled={true} />
       <InputField label={t("scm-manage-folder-plugin.create.name.label")} value={folderName} onChange={setFolderName} />
+      <CommitAuthor />
       <Textarea
         placeholder={t("scm-manage-folder-plugin.create.commit.placeholder")}
         onChange={message => setCommitMessage(message)}
         value={commitMessage}
       />
-      <InputField label={t("scm-manage-folder-plugin.create.branch.label")} value={revision} disabled={true} />
-      {/*<CommitAuthor />*/}
     </>
   );
 

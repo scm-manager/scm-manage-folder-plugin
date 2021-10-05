@@ -23,7 +23,7 @@
  */
 import React, { FC, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, ButtonGroup, Modal, Textarea } from "@scm-manager/ui-components";
+import { Button, ButtonGroup, CommitAuthor, Modal, Textarea } from "@scm-manager/ui-components";
 
 type Props = {
   onCommit: (p: string) => void;
@@ -37,7 +37,7 @@ const FolderDeleteModal: FC<Props> = ({ onCommit, onClose, loading }) => {
 
   const body = (
     <>
-      {/*<CommitAuthor />*/}
+      <CommitAuthor />
       <Textarea
         placeholder={t("scm-manage-folder-plugin.delete.commit.placeholder")}
         onChange={setCommitMessage}

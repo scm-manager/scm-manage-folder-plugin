@@ -64,15 +64,31 @@ public class FileLinkEnricher implements HalEnricher {
 
           appender.appendLink("createFolder", linkBuilder
             .method("createFolder")
-            .parameters(namespaceAndName.getNamespace(), namespaceAndName.getName(), "PATH_PART").href().replace("PATH_PART", fileObject.getPath() + "/{path}")
+            .parameters(namespaceAndName.getNamespace(), namespaceAndName.getName(), "PATH_PART").href().replace("PATH_PART", fixObjectPath(fileObject.getPath()) + "{path}")
           );
 
-          appender.appendLink("deleteFolder", linkBuilder
-            .method("deleteFolder")
-            .parameters(namespaceAndName.getNamespace(), namespaceAndName.getName(), fileObject.getPath()).href()
-          );
+          if (isNotRoot(fileObject)) {
+            appender.appendLink("deleteFolder", linkBuilder
+              .method("deleteFolder")
+              .parameters(namespaceAndName.getNamespace(), namespaceAndName.getName(), fileObject.getPath()).href()
+            );
+          }
         }
       }
     }
+  }
+
+  private boolean isNotRoot(FileObject fileObject) {
+    return !fileObject.getPath().equals("") && !fileObject.getPath().equals("/");
+  }
+
+  private String fixObjectPath(String path) {
+    if (path.isEmpty() || path.equals("/")) {
+      return "";
+    }
+    if (!path.endsWith("/")) {
+      return path + "/";
+    }
+    return path;
   }
 }

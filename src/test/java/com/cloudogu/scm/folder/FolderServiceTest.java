@@ -1,6 +1,7 @@
 package com.cloudogu.scm.folder;
 
 import org.apache.shiro.authz.AuthorizationException;
+import org.assertj.core.api.Assertions;
 import org.github.sdorra.jse.ShiroExtension;
 import org.github.sdorra.jse.SubjectAware;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,11 +16,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import sonia.scm.ScmConstraintViolationException;
 import sonia.scm.api.v2.resources.ScmPathInfoStore;
 import sonia.scm.repository.BrowserResult;
+import sonia.scm.repository.Changeset;
 import sonia.scm.repository.FileObject;
 import sonia.scm.repository.NamespaceAndName;
+import sonia.scm.repository.Person;
 import sonia.scm.repository.Repository;
 import sonia.scm.repository.RepositoryTestData;
 import sonia.scm.repository.api.BrowseCommandBuilder;
+import sonia.scm.repository.api.LogCommandBuilder;
 import sonia.scm.repository.api.ModifyCommandBuilder;
 import sonia.scm.repository.api.RepositoryService;
 import sonia.scm.repository.api.RepositoryServiceFactory;
@@ -28,13 +32,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.Date;
 
 import static com.cloudogu.scm.folder.FolderService.KEEP_FILE_NAME;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -46,21 +49,23 @@ import static org.mockito.Mockito.when;
 @ExtendWith({MockitoExtension.class, ShiroExtension.class})
 class FolderServiceTest {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  private RepositoryService repositoryService;
+  RepositoryService repositoryService;
   @Mock
-  private RepositoryServiceFactory repositoryServiceFactory;
+  RepositoryServiceFactory repositoryServiceFactory;
   @Mock(answer = Answers.RETURNS_SELF)
-  private ModifyCommandBuilder modifyCommandBuilder;
+  ModifyCommandBuilder modifyCommandBuilder;
   @Mock
   ModifyCommandBuilder.WithOverwriteFlagContentLoader createContentLoader;
   @Mock(answer = Answers.RETURNS_SELF)
   BrowseCommandBuilder browseCommandBuilder;
   @Mock
   BrowserResult browserResult;
+  @Mock
+  LogCommandBuilder logCommandBuilder;
 
-  private final Repository repository = RepositoryTestData.createHeartOfGold();
+  final Repository repository = RepositoryTestData.createHeartOfGold();
 
-  private FolderService folderService;
+  FolderService folderService;
 
   @BeforeEach
   void setUpObjectUnderTest() throws IOException {
@@ -74,6 +79,7 @@ class FolderServiceTest {
     lenient().when(modifyCommandBuilder.createFile(anyString())).thenReturn(createContentLoader);
     lenient().when(createContentLoader.setOverwrite(anyBoolean())).thenReturn(createContentLoader);
     lenient().when(createContentLoader.withData(any(ByteArrayInputStream.class))).thenReturn(modifyCommandBuilder);
+    lenient().when(repositoryService.getLogCommand()).thenReturn(logCommandBuilder);
 
     folderService = new FolderService(repositoryServiceFactory);
   }
@@ -104,13 +110,30 @@ class FolderServiceTest {
 
     @SubjectAware(permissions = "repository:push:*")
     @Test
-    void shouldCreateCorrectModifyCommand() throws IOException {
-      folderService.create(repository.getNamespace(), repository.getName(), "master", "newFolder", "create new folder commit");
+    void shouldCreateCorrectModifyCommandAndReturnChangeset() throws IOException {
+      when(modifyCommandBuilder.execute()).thenReturn("1337");
+      when(logCommandBuilder.getChangeset("1337")).thenReturn(new Changeset("1337", new Date().getTime(), new Person("Trillian")));
 
-      verify(modifyCommandBuilder.createFile("newFolder/" + KEEP_FILE_NAME).setOverwrite(true)).withData(any(InputStream.class));
+      final Changeset changeset = folderService.create(repository.getNamespace(), repository.getName(), "master", "newFolder", "create new folder commit");
+
+      verify(modifyCommandBuilder).createFile("newFolder/" + KEEP_FILE_NAME);
+      verify(createContentLoader).withData(any(InputStream.class));
+      verify(createContentLoader).setOverwrite(true);
       verify(modifyCommandBuilder).setCommitMessage("create new folder commit");
       verify(modifyCommandBuilder).setBranch("master");
       verify(modifyCommandBuilder).execute();
+      verify(logCommandBuilder).setBranch("master");
+      verify(logCommandBuilder).getChangeset("1337");
+      assertThat(changeset).isNotNull();
+      assertThat(changeset.getId()).isEqualTo("1337");
+    }
+
+    @SubjectAware(permissions = "repository:push:*")
+    @Test
+    void shouldNotAddSecondTrailingSlashToPath() throws IOException {
+      folderService.create(repository.getNamespace(), repository.getName(), "master", "newFolder/", "create new folder commit");
+
+      verify(modifyCommandBuilder).createFile("newFolder/" + KEEP_FILE_NAME);
     }
   }
 
@@ -154,7 +177,7 @@ class FolderServiceTest {
 
     @SubjectAware(permissions = "repository:push:*")
     @Test
-    void shouldDeleteFilesRecursively() throws IOException {
+    void shouldDeleteFilesRecursivelyAndReturnChangeset() throws IOException {
       when(browserResult.getFile()).thenReturn(
         createFileObject("root",
           createFileObject("root/folder",
@@ -167,9 +190,10 @@ class FolderServiceTest {
           )
         )
       );
+      when(modifyCommandBuilder.execute()).thenReturn("1337");
+      when(logCommandBuilder.getChangeset("1337")).thenReturn(new Changeset("1337", new Date().getTime(), new Person("Trillian")));
 
-
-      folderService.delete(repository.getNamespace(), repository.getName(), "master", "root/folder", "delete folders");
+      final Changeset changeset = folderService.delete(repository.getNamespace(), repository.getName(), "master", "root/folder", "delete folders");
 
       InOrder orderVerifier = Mockito.inOrder(modifyCommandBuilder);
       orderVerifier.verify(modifyCommandBuilder).deleteFile("root/folder/foo.txt");
@@ -182,6 +206,10 @@ class FolderServiceTest {
       verify(modifyCommandBuilder).setCommitMessage("delete folders");
       verify(modifyCommandBuilder).setBranch("master");
       verify(modifyCommandBuilder).execute();
+      verify(logCommandBuilder).setBranch("master");
+      verify(logCommandBuilder).getChangeset("1337");
+      assertThat(changeset).isNotNull();
+      assertThat(changeset.getId()).isEqualTo("1337");
     }
   }
 

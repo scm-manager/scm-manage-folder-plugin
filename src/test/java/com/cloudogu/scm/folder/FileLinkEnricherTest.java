@@ -26,6 +26,7 @@ import java.net.URI;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -109,6 +110,30 @@ class FileLinkEnricherTest {
     enricher.enrich(context, appender);
 
     verify(appender).appendLink("deleteFolder", "/v2/folder/hitchhiker/HeartOfGold/delete/dummy");
+  }
+
+  @Test
+  void shouldNotAddDeleteLinkForEmptyPath() {
+    setUpRepositoryPermission(repository.getId());
+
+    setUpHalContext(repository, true, "");
+
+    enricher.enrich(context, appender);
+
+    verify(appender, never()).appendLink("deleteFolder", "/v2/folder/hitchhiker/HeartOfGold/delete/dummy");
+    verify(appender).appendLink("createFolder", "/v2/folder/hitchhiker/HeartOfGold/create/{path}");
+  }
+
+  @Test
+  void shouldNotAddDeleteLinkForRootPath() {
+    setUpRepositoryPermission(repository.getId());
+
+    setUpHalContext(repository, true, "/");
+
+    enricher.enrich(context, appender);
+
+    verify(appender, never()).appendLink("deleteFolder", "/v2/folder/hitchhiker/HeartOfGold/delete/dummy");
+    verify(appender).appendLink("createFolder", "/v2/folder/hitchhiker/HeartOfGold/create/{path}");
   }
 
   private void setUpHalContext(Repository repository, boolean directory, String path) {
