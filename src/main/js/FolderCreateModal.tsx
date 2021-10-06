@@ -78,7 +78,11 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
       .then(response => response.json())
       .then((changeset: Changeset) => {
         history.push(
-          createRedirectUrl(repository, changeset, `${path}${!path || path.endsWith("/") ? "" : "/"}${folderName}`)
+          createRedirectUrl(
+            repository,
+            changeset,
+            `${path || ""}${!path || path.endsWith("/") ? "" : "/"}${folderName}`
+          )
         );
       })
       .catch(setError)

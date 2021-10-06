@@ -50,7 +50,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static sonia.scm.ScmConstraintViolationException.Builder.doThrow;
 
 public class FolderService {
-  static final ByteArrayInputStream KEEP_FILE_CONTENT = new ByteArrayInputStream("This file was created automatically.".getBytes(UTF_8));
+  static final byte[] KEEP_FILE_CONTENT = "This file was created automatically.".getBytes(UTF_8);
   static final String KEEP_FILE_NAME = ".scmkeep";
   private final RepositoryServiceFactory repositoryServiceFactory;
 
@@ -60,107 +60,125 @@ public class FolderService {
   }
 
   Changeset create(String namespace, String repositoryName, String branch, String path, String commitMessage) throws IOException {
-    // validate path
     doThrow()
       .violation("invalid path: ", path)
       .when(!ValidationUtil.isPathValid(path) || StringUtils.isEmpty(path));
-    // check permissions
+
     try (RepositoryService repositoryService = repositoryServiceFactory.create(new NamespaceAndName(namespace, repositoryName))) {
       RepositoryPermissions.push(repositoryService.getRepository()).check();
-      // create folder with modify command
+
       ModifyCommandBuilder modifyCommand = repositoryService.getModifyCommand();
       if (!Strings.isNullOrEmpty(branch)) {
         modifyCommand.setBranch(branch);
       }
       modifyCommand.setCommitMessage(commitMessage);
-      createKeepFile(path, modifyCommand);
-      String changesetId = modifyCommand.execute();
-      LogCommandBuilder logCommand = repositoryService.getLogCommand();
-      if (!Strings.isNullOrEmpty(branch)) {
-        logCommand.setBranch(branch);
-      }
-      return logCommand.getChangeset(changesetId);
+      createKeepFile(modifyCommand, path);
+      String newChangesetId = modifyCommand.execute();
+
+      return getChangeset(repositoryService, branch , newChangesetId);
     }
   }
 
   Changeset delete(String namespace, String repositoryName, @CheckForNull String branch, String path, String commitMessage) throws IOException {
-    // validate path
     doThrow()
       .violation("invalid path: ", path)
       .when(!ValidationUtil.isPathValid(path) || StringUtils.isEmpty(path));
+
     try (RepositoryService repositoryService = repositoryServiceFactory.create(new NamespaceAndName(namespace, repositoryName))) {
-      // check permissions
-      final Repository repository = repositoryService.getRepository();
+      Repository repository = repositoryService.getRepository();
       RepositoryPermissions.push(repository).check();
 
-      final String[] pathParts = path.split("/");
+      String[] pathParts = path.split("/");
       String folderName = pathParts[pathParts.length - 1];
-      StringBuilder parentPath = new StringBuilder();
-      for (int i = 0; i <= pathParts.length - 2; i++) {
-        if (i != 0) {
-          parentPath.append("/");
-        }
-        parentPath.append(pathParts[i]);
-      }
+      String parentPath = getParentPath(pathParts);
 
-      final BrowseCommandBuilder browseCommandBuilder = repositoryService.getBrowseCommand()
-        .setDisableCache(true)
-        .setDisableLastCommit(true)
-        .setDisablePreProcessors(true)
-        .setDisableSubRepositoryDetection(true)
-        .setPath(parentPath.toString());
+      FileObject parentFile = findFile(repositoryService, branch, parentPath);
+      FileObject fileToDelete = findChildByName(parentFile, folderName);
 
-      if (!Strings.isNullOrEmpty(branch)) {
-        browseCommandBuilder.setRevision(branch);
-      }
+      assertIsValidDirectory(repository, branch, path, fileToDelete);
 
-      final BrowserResult browserResult = browseCommandBuilder.getBrowserResult();
-
-      final FileObject parentFile = browserResult.getFile();
-      FileObject file = null;
-      boolean createScmKeepInParent = false;
-      if (parentFile.getChildren().size() == 1) {
-        createScmKeepInParent = true;
-        file = parentFile.getChildren().iterator().next();
-      } else {
-        for (FileObject fo : parentFile.getChildren()) {
-          if (fo.getName().equals(folderName)) {
-            file = fo;
-          }
-        }
-      }
-      if (file == null) {
-        throw NotFoundException.notFound(createErrorContext(branch, path, repository));
-      }
-
-      // check if path is folder
-      if (!file.isDirectory()) {
-        final ContextEntry.ContextBuilder contextBuilder = createErrorContext(branch, path, repository);
-        throw new PathIsNotADirectoryException(contextBuilder.build(), "The provided path does not belong to a directory, but a file");
-      }
-
-      // delete files and folders with modify command
-      final ModifyCommandBuilder modifyCommand = repositoryService.getModifyCommand();
-      modifyCommand.deleteFile(file.getPath(), true);
-      // create keep file if parent would be empty after deletion
-      if (createScmKeepInParent) {
-        createKeepFile(parentPath.toString(), modifyCommand);
-      }
-      if (!Strings.isNullOrEmpty(branch)) {
-        modifyCommand.setBranch(branch);
-      }
-      modifyCommand.setCommitMessage(commitMessage);
-      String changesetId = modifyCommand.execute();
-      LogCommandBuilder logCommand = repositoryService.getLogCommand();
-      if (!Strings.isNullOrEmpty(branch)) {
-        logCommand.setBranch(branch);
-      }
-      return logCommand.getChangeset(changesetId);
+      String newChangesetId = createDeleteCommand(repositoryService, branch, parentPath, parentFile, fileToDelete, commitMessage).execute();
+      return getChangeset(repositoryService, branch, newChangesetId);
     }
   }
 
+  private FileObject findFile(RepositoryService repositoryService, String branch, String path) throws IOException {
+    BrowseCommandBuilder browseCommandBuilder = repositoryService.getBrowseCommand()
+      .setDisableCache(true)
+      .setDisableLastCommit(true)
+      .setDisablePreProcessors(true)
+      .setDisableSubRepositoryDetection(true)
+      .setPath(path);
+
+    if (!Strings.isNullOrEmpty(branch)) {
+      browseCommandBuilder.setRevision(branch);
+    }
+
+    BrowserResult browserResult = browseCommandBuilder.getBrowserResult();
+
+    return browserResult.getFile();
+  }
+
+  private void assertIsValidDirectory(Repository repository, String branch, String path, FileObject fileToDelete) {
+    if (fileToDelete == null) {
+      throw NotFoundException.notFound(createErrorContext(branch, path, repository));
+    }
+
+    if (!fileToDelete.isDirectory()) {
+      ContextEntry.ContextBuilder contextBuilder = createErrorContext(branch, path, repository);
+      throw new PathIsNotADirectoryException(contextBuilder.build(), "The provided path does not belong to a directory, but a file");
+    }
+  }
+
+  private ModifyCommandBuilder createDeleteCommand(RepositoryService repositoryService, String branch, String parentPath, FileObject parentFile, FileObject fileToDelete, String commitMessage) throws IOException {
+    ModifyCommandBuilder modifyCommand = repositoryService.getModifyCommand();
+    if (!Strings.isNullOrEmpty(branch)) {
+      modifyCommand.setBranch(branch);
+    }
+    modifyCommand.setCommitMessage(commitMessage);
+
+    modifyCommand.deleteFile(fileToDelete.getPath(), true);
+    createKeepFileIfParentIsEmptyAfterDeletion(parentPath, parentFile, modifyCommand);
+
+    return modifyCommand;
+  }
+
+  private void createKeepFileIfParentIsEmptyAfterDeletion(String parentPath, FileObject parentFile, ModifyCommandBuilder modifyCommand) throws IOException {
+    if (parentFile.getChildren().size() == 1 && isNotRoot(parentFile)) {
+      createKeepFile(modifyCommand, parentPath);
+    }
+  }
+
+  private Changeset getChangeset(RepositoryService repositoryService, @CheckForNull String branch, String changesetId) throws IOException {
+    LogCommandBuilder logCommand = repositoryService.getLogCommand();
+    if (!Strings.isNullOrEmpty(branch)) {
+      logCommand.setBranch(branch);
+    }
+    return logCommand.getChangeset(changesetId);
+  }
+
+  private FileObject findChildByName(FileObject fileObject, String childName) {
+    for (FileObject fo : fileObject.getChildren()) {
+      if (fo.getName().equals(childName)) {
+        return fo;
+      }
+    }
+    return null;
+  }
+
+  private String getParentPath(String[] pathParts) {
+    StringBuilder parentPath = new StringBuilder();
+    for (int i = 0; i <= pathParts.length - 2; i++) {
+      if (i != 0) {
+        parentPath.append("/");
+      }
+      parentPath.append(pathParts[i]);
+    }
+    return parentPath.toString();
+  }
+
   private ContextEntry.ContextBuilder createErrorContext(String branch, String path, Repository repository) {
-    final ContextEntry.ContextBuilder contextBuilder = new ContextEntry.ContextBuilder();
+    ContextEntry.ContextBuilder contextBuilder = new ContextEntry.ContextBuilder();
     contextBuilder.in(repository);
     if (!Strings.isNullOrEmpty(branch)) {
       contextBuilder.in(Branch.class, branch);
@@ -176,10 +194,14 @@ public class FolderService {
     return path;
   }
 
-  private ModifyCommandBuilder createKeepFile(String path, ModifyCommandBuilder modifyCommand) throws IOException {
-    return modifyCommand
+  private void createKeepFile(ModifyCommandBuilder modifyCommand, String path) throws IOException {
+    modifyCommand
       .createFile(ensureTrailingSlash(path) + KEEP_FILE_NAME)
       .setOverwrite(true)
-      .withData(KEEP_FILE_CONTENT);
+      .withData(new ByteArrayInputStream(KEEP_FILE_CONTENT));
+  }
+
+  private boolean isNotRoot(FileObject fileObject) {
+    return !fileObject.getPath().equals("") && !fileObject.getPath().equals("/");
   }
 }

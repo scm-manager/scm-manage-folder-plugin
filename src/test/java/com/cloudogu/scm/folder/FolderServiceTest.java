@@ -24,7 +24,6 @@
 package com.cloudogu.scm.folder;
 
 import org.apache.shiro.authz.AuthorizationException;
-import org.assertj.core.api.Assertions;
 import org.github.sdorra.jse.ShiroExtension;
 import org.github.sdorra.jse.SubjectAware;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,9 +31,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
-import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import sonia.scm.ScmConstraintViolationException;
 import sonia.scm.api.v2.resources.ScmPathInfoStore;
@@ -216,8 +213,7 @@ class FolderServiceTest {
 
       final Changeset changeset = folderService.delete(repository.getNamespace(), repository.getName(), "master", "root/folder", "delete folders");
 
-      InOrder orderVerifier = Mockito.inOrder(modifyCommandBuilder);
-      orderVerifier.verify(modifyCommandBuilder).deleteFile("root", true);
+      verify(modifyCommandBuilder).deleteFile("root", true);
       verify(modifyCommandBuilder, never()).createFile(".scmkeep");
       verify(modifyCommandBuilder).setCommitMessage("delete folders");
       verify(modifyCommandBuilder).setBranch("master");
