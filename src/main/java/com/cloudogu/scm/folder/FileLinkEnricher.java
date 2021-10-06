@@ -23,6 +23,7 @@
  */
 package com.cloudogu.scm.folder;
 
+import com.cloudogu.scm.editor.EditorPreconditions;
 import sonia.scm.api.v2.resources.Enrich;
 import sonia.scm.api.v2.resources.HalAppender;
 import sonia.scm.api.v2.resources.HalEnricher;
@@ -30,11 +31,9 @@ import sonia.scm.api.v2.resources.HalEnricherContext;
 import sonia.scm.api.v2.resources.LinkBuilder;
 import sonia.scm.api.v2.resources.ScmPathInfoStore;
 import sonia.scm.plugin.Extension;
+import sonia.scm.repository.BrowserResult;
 import sonia.scm.repository.FileObject;
 import sonia.scm.repository.NamespaceAndName;
-import sonia.scm.repository.RepositoryPermissions;
-import sonia.scm.repository.api.RepositoryService;
-import sonia.scm.repository.api.RepositoryServiceFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -43,12 +42,12 @@ import javax.inject.Provider;
 @Enrich(FileObject.class)
 public class FileLinkEnricher implements HalEnricher {
 
-  private final RepositoryServiceFactory repositoryServiceFactory;
+  private final EditorPreconditions editorPreconditions;
   private final Provider<ScmPathInfoStore> scmPathInfoStore;
 
   @Inject
-  public FileLinkEnricher(RepositoryServiceFactory repositoryServiceFactory, Provider<ScmPathInfoStore> scmPathInfoStore) {
-    this.repositoryServiceFactory = repositoryServiceFactory;
+  public FileLinkEnricher(EditorPreconditions editorPreconditions, Provider<ScmPathInfoStore> scmPathInfoStore) {
+    this.editorPreconditions = editorPreconditions;
     this.scmPathInfoStore = scmPathInfoStore;
   }
 
@@ -56,24 +55,25 @@ public class FileLinkEnricher implements HalEnricher {
   public void enrich(HalEnricherContext context, HalAppender appender) {
     NamespaceAndName namespaceAndName = context.oneRequireByType(NamespaceAndName.class);
     FileObject fileObject = context.oneRequireByType(FileObject.class);
+    final BrowserResult browserResult = context.oneRequireByType(BrowserResult.class);
 
-    if (fileObject.isDirectory()) {
-      try (RepositoryService repositoryService = repositoryServiceFactory.create(namespaceAndName)) {
-        if (RepositoryPermissions.push(repositoryService.getRepository()).isPermitted()) {
-          LinkBuilder linkBuilder = new LinkBuilder(scmPathInfoStore.get().get(), FolderResource.class);
+    if (fileObject.isDirectory() && editorPreconditions.isEditable(namespaceAndName, browserResult)) {
+      LinkBuilder linkBuilder = new LinkBuilder(scmPathInfoStore.get().get(), FolderResource.class);
 
-          appender.appendLink("createFolder", linkBuilder
-            .method("createFolder")
-            .parameters(namespaceAndName.getNamespace(), namespaceAndName.getName(), "PATH_PART").href().replace("PATH_PART", fixObjectPath(fileObject.getPath()) + "{path}")
-          );
+      appender.appendLink("createFolder", linkBuilder
+        .method("createFolder")
+        .parameters(
+          namespaceAndName.getNamespace(),
+          namespaceAndName.getName(),
+          "PATH_PART"
+        ).href().replace("PATH_PART", fixObjectPath(fileObject.getPath()) + "{path}")
+      );
 
-          if (isNotRoot(fileObject)) {
-            appender.appendLink("deleteFolder", linkBuilder
-              .method("deleteFolder")
-              .parameters(namespaceAndName.getNamespace(), namespaceAndName.getName(), fileObject.getPath()).href()
-            );
-          }
-        }
+      if (isNotRoot(fileObject)) {
+        appender.appendLink("deleteFolder", linkBuilder
+          .method("deleteFolder")
+          .parameters(namespaceAndName.getNamespace(), namespaceAndName.getName(), fileObject.getPath()).href()
+        );
       }
     }
   }

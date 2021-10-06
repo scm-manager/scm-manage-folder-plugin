@@ -84,6 +84,7 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
             `${path || ""}${!path || path.endsWith("/") ? "" : "/"}${folderName}`
           )
         );
+        onClose();
       })
       .catch(setError)
       .finally(() => setLoading(false));
@@ -92,7 +93,9 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
   const body = (
     <>
       {error ? <ErrorNotification error={error} /> : null}
-      <InputField label={t("scm-manage-folder-plugin.create.branch.label")} value={revision} disabled={true} />
+      {revision ? (
+        <InputField label={t("scm-manage-folder-plugin.create.branch.label")} value={revision} disabled={true} />
+      ) : null}
       <InputField
         label={t("scm-manage-folder-plugin.create.path.label")}
         value={sources.path === "/" ? "/" : "/" + sources.path}

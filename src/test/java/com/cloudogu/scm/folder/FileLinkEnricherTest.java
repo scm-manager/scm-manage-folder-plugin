@@ -23,10 +23,9 @@
  */
 package com.cloudogu.scm.folder;
 
+import com.cloudogu.scm.editor.EditorPreconditions;
 import com.google.inject.util.Providers;
-import org.apache.shiro.subject.Subject;
-import org.apache.shiro.util.ThreadContext;
-import org.junit.jupiter.api.AfterEach;
+import org.github.sdorra.jse.SubjectAware;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +41,6 @@ import sonia.scm.repository.NamespaceAndName;
 import sonia.scm.repository.Repository;
 import sonia.scm.repository.RepositoryTestData;
 import sonia.scm.repository.api.RepositoryService;
-import sonia.scm.repository.api.RepositoryServiceFactory;
 
 import java.net.URI;
 
@@ -54,15 +52,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+@SubjectAware("Trillian")
 @ExtendWith(MockitoExtension.class)
 class FileLinkEnricherTest {
 
-  @Mock
-  private Subject subject;
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private RepositoryService repositoryService;
   @Mock
-  private RepositoryServiceFactory repositoryServiceFactory;
+  private EditorPreconditions editorPreconditions;
   @Mock
   private HalEnricherContext context;
   @Mock
@@ -78,25 +75,13 @@ class FileLinkEnricherTest {
   void setUpObjectUnderTest() {
     ScmPathInfoStore pathInfoStore = new ScmPathInfoStore();
     pathInfoStore.set(() -> URI.create("/"));
-    lenient().when(repositoryServiceFactory.create(any(NamespaceAndName.class))).thenReturn(repositoryService);
     when(repositoryService.getRepository()).thenReturn(repository);
-    enricher = new FileLinkEnricher(repositoryServiceFactory, Providers.of(pathInfoStore));
+    enricher = new FileLinkEnricher(editorPreconditions, Providers.of(pathInfoStore));
   }
 
-  @BeforeEach
-  void setUpSubject() {
-    ThreadContext.bind(subject);
-  }
-
-  @AfterEach
-  void tearDownSubject() {
-    ThreadContext.unbindSubject();
-  }
-
+  @SubjectAware(permissions = "repository:push:*")
   @Test
   void shouldNotEnrichNonDirectories() {
-    setUpRepositoryPermission(repository.getId());
-
     setUpHalContext(repository, false, "foo");
 
     enricher.enrich(context, appender);
@@ -113,10 +98,20 @@ class FileLinkEnricherTest {
     verifyNoMoreInteractions(appender);
   }
 
+  @SubjectAware(permissions = "repository:push:*")
+  @Test
+  void shouldNotEnrichIfRepositoryisNotEditable() {
+    setUpHalContext(repository, true, "bar");
+
+    enricher.enrich(context, appender);
+
+    verifyNoMoreInteractions(appender);
+  }
+
+  @SubjectAware(permissions = "repository:push:*")
   @Test
   void shouldAddCreateLink() {
-    setUpRepositoryPermission(repository.getId());
-
+    makeRepositoryEditable();
     setUpHalContext(repository, true, "root");
 
     enricher.enrich(context, appender);
@@ -124,10 +119,10 @@ class FileLinkEnricherTest {
     verify(appender).appendLink("createFolder", "/v2/folder/hitchhiker/HeartOfGold/create/root/{path}");
   }
 
+  @SubjectAware(permissions = "repository:push:*")
   @Test
   void shouldAddDeleteLink() {
-    setUpRepositoryPermission(repository.getId());
-
+    makeRepositoryEditable();
     setUpHalContext(repository, true, "dummy");
 
     enricher.enrich(context, appender);
@@ -135,10 +130,10 @@ class FileLinkEnricherTest {
     verify(appender).appendLink("deleteFolder", "/v2/folder/hitchhiker/HeartOfGold/delete/dummy");
   }
 
+  @SubjectAware(permissions = "repository:push:*")
   @Test
   void shouldNotAddDeleteLinkForEmptyPath() {
-    setUpRepositoryPermission(repository.getId());
-
+    makeRepositoryEditable();
     setUpHalContext(repository, true, "");
 
     enricher.enrich(context, appender);
@@ -147,10 +142,10 @@ class FileLinkEnricherTest {
     verify(appender).appendLink("createFolder", "/v2/folder/hitchhiker/HeartOfGold/create/{path}");
   }
 
+  @SubjectAware(permissions = "repository:push:*")
   @Test
   void shouldNotAddDeleteLinkForRootPath() {
-    setUpRepositoryPermission(repository.getId());
-
+    makeRepositoryEditable();
     setUpHalContext(repository, true, "/");
 
     enricher.enrich(context, appender);
@@ -174,7 +169,7 @@ class FileLinkEnricherTest {
     return new BrowserResult("42", "master", fileObject);
   }
 
-  private void setUpRepositoryPermission(String repositoryId) {
-    lenient().when(subject.isPermitted("repository:push:" + repositoryId)).thenReturn(true);
+  private void makeRepositoryEditable() {
+    when(editorPreconditions.isEditable(any(NamespaceAndName.class), any(BrowserResult.class))).thenReturn(true);
   }
 }
