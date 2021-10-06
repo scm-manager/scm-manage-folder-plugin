@@ -21,20 +21,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.cloudogu.scm.folder;
+import { Repository, Changeset } from "@scm-manager/ui-types";
 
-import sonia.scm.ContextEntry;
-import sonia.scm.ExceptionWithContext;
-
-import java.util.List;
-
-public class PathIsNotADirectoryException extends ExceptionWithContext {
-  protected PathIsNotADirectoryException(List<ContextEntry> context, String message) {
-    super(context, message);
-  }
-
-  @Override
-  public String getCode() {
-    return "B0Skx4uOG1";
-  }
-}
+export const createRedirectUrl = (repository: Repository, newCommit: Changeset, path?: string) => {
+  const newRevision =
+    newCommit._embedded &&
+    newCommit._embedded.branches &&
+    newCommit._embedded.branches[0] &&
+    newCommit._embedded.branches[0].name
+      ? newCommit._embedded.branches[0].name
+      : newCommit.id;
+  return `/repo/${repository.namespace}/${repository.name}/code/sources/${encodeURIComponent(newRevision)}${
+    !path || path.startsWith("/") ? "" : "/"
+  }${path}`;
+};

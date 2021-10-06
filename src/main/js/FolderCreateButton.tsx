@@ -22,12 +22,14 @@
  * SOFTWARE.
  */
 import React, { FC, useState } from "react";
-import { File, Repository, Link } from "@scm-manager/ui-types";
+import { File, Repository, Link, Changeset } from "@scm-manager/ui-types";
 import { useTranslation } from "react-i18next";
 import styled from "styled-components";
 import FolderCreateModal from "./FolderCreateModal";
 import { CommitDto } from "./types";
 import { apiClient } from "@scm-manager/ui-components";
+import { useHistory } from "react-router-dom";
+import { createRedirectUrl } from "./createRedirectUrl";
 
 const Button = styled.span`
   width: 50px;
@@ -44,9 +46,11 @@ type Props = {
   sources: File;
 };
 
-const FolderCreateButton: FC<Props> = ({ sources, path, revision }) => {
+const FolderCreateButton: FC<Props> = ({ sources, path, revision, repository }) => {
   const [t] = useTranslation("plugins");
   const [creationModalVisible, setCreationModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const history = useHistory();
 
   if (!sources || !("createFolder" in sources._links)) {
     return null;
@@ -58,15 +62,23 @@ const FolderCreateButton: FC<Props> = ({ sources, path, revision }) => {
       commitMessage: message,
       branch: revision || ""
     };
+    setLoading(true);
     apiClient
       .post(createLink, payload)
-      .then(() => setCreationModalVisible(false))
+      .then(response => response.json())
+      .then((changeset: Changeset) => {
+        history.push(
+          createRedirectUrl(repository, changeset, `${path}${!path || path.endsWith("/") ? "" : "/"}${name}`)
+        );
+        setCreationModalVisible(false);
+      })
       .catch(console.log);
   };
   return (
     <>
       {creationModalVisible ? (
         <FolderCreateModal
+          loading={loading}
           sources={sources}
           path={path}
           revision={revision}

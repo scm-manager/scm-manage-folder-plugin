@@ -1,3 +1,26 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2020-present Cloudogu GmbH and Contributors
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 package com.cloudogu.scm.folder;
 
 import org.apache.shiro.authz.AuthorizationException;
@@ -42,6 +65,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -167,7 +191,11 @@ class FolderServiceTest {
       final String namespace = repository.getNamespace();
       final String name = repository.getName();
 
-      when(browserResult.getFile()).thenReturn(createFileObject("root/notAFolder.txt"));
+      when(browserResult.getFile()).thenReturn(
+        createFileObject("root",
+          createFileObject("root/notAFolder.txt")
+        )
+      );
 
       assertThrows(
         PathIsNotADirectoryException.class,
@@ -179,14 +207,16 @@ class FolderServiceTest {
     @Test
     void shouldDeleteFilesRecursivelyAndReturnChangeset() throws IOException {
       when(browserResult.getFile()).thenReturn(
-        createFileObject("root",
-          createFileObject("root/folder",
-            createFileObject("root/folder/foo.txt"),
-            createFileObject("root/folder/bar.test")
-          ),
-          createFileObject("root/other",
-            createFileObject("root/other/trillian.xml"),
-            createFileObject("root/other/space.jar")
+        createFileObject("",
+          createFileObject("root",
+            createFileObject("root/folder",
+              createFileObject("root/folder/foo.txt"),
+              createFileObject("root/folder/bar.test")
+            ),
+            createFileObject("root/other",
+              createFileObject("root/other/trillian.xml"),
+              createFileObject("root/other/space.jar")
+            )
           )
         )
       );
@@ -203,6 +233,7 @@ class FolderServiceTest {
       orderVerifier.verify(modifyCommandBuilder).deleteFile("root/other/space.jar");
       orderVerifier.verify(modifyCommandBuilder).deleteFile("root/other");
       orderVerifier.verify(modifyCommandBuilder).deleteFile("root");
+      verify(modifyCommandBuilder, never()).createFile(".scmkeep");
       verify(modifyCommandBuilder).setCommitMessage("delete folders");
       verify(modifyCommandBuilder).setBranch("master");
       verify(modifyCommandBuilder).execute();
@@ -213,6 +244,24 @@ class FolderServiceTest {
     }
   }
 
+  @SubjectAware(permissions = "repository:push:*")
+  @Test
+  void shouldCreateScmKeepIfParentFolderIsEmptyAfterDeletion() throws IOException {
+    when(browserResult.getFile()).thenReturn(
+      createFileObject("folderWithOneFile",
+        createFileObject("folderWithOneFile/subfolder",
+          createFileObject("folderWithOneFile/subfolder/.scmkeep")
+        )
+      )
+    );
+    when(modifyCommandBuilder.execute()).thenReturn("1337");
+    when(logCommandBuilder.getChangeset("1337")).thenReturn(new Changeset("1337", new Date().getTime(), new Person("Trillian")));
+
+    folderService.delete(repository.getNamespace(), repository.getName(), "master", "folderWithOneFile/subfolder", "delete subfolder");
+
+    verify(modifyCommandBuilder).createFile("folderWithOneFile/.scmkeep");
+  }
+
   private FileObject createFileObject(String path, FileObject ...children) {
     final FileObject fileObject = new FileObject();
     if (children != null && children.length > 0) {
@@ -220,6 +269,8 @@ class FolderServiceTest {
       fileObject.setChildren(Arrays.asList(children));
     }
     fileObject.setPath(path);
+    final String[] pathParts = path.split("/");
+    fileObject.setName(pathParts[pathParts.length - 1]);
     return fileObject;
   }
 
