@@ -208,16 +208,7 @@ class FolderServiceTest {
     void shouldDeleteFilesRecursivelyAndReturnChangeset() throws IOException {
       when(browserResult.getFile()).thenReturn(
         createFileObject("",
-          createFileObject("root",
-            createFileObject("root/folder",
-              createFileObject("root/folder/foo.txt"),
-              createFileObject("root/folder/bar.test")
-            ),
-            createFileObject("root/other",
-              createFileObject("root/other/trillian.xml"),
-              createFileObject("root/other/space.jar")
-            )
-          )
+          createEmptyDirectoryObject("root")
         )
       );
       when(modifyCommandBuilder.execute()).thenReturn("1337");
@@ -226,13 +217,7 @@ class FolderServiceTest {
       final Changeset changeset = folderService.delete(repository.getNamespace(), repository.getName(), "master", "root/folder", "delete folders");
 
       InOrder orderVerifier = Mockito.inOrder(modifyCommandBuilder);
-      orderVerifier.verify(modifyCommandBuilder).deleteFile("root/folder/foo.txt");
-      orderVerifier.verify(modifyCommandBuilder).deleteFile("root/folder/bar.test");
-      orderVerifier.verify(modifyCommandBuilder).deleteFile("root/folder");
-      orderVerifier.verify(modifyCommandBuilder).deleteFile("root/other/trillian.xml");
-      orderVerifier.verify(modifyCommandBuilder).deleteFile("root/other/space.jar");
-      orderVerifier.verify(modifyCommandBuilder).deleteFile("root/other");
-      orderVerifier.verify(modifyCommandBuilder).deleteFile("root");
+      orderVerifier.verify(modifyCommandBuilder).deleteFile("root", true);
       verify(modifyCommandBuilder, never()).createFile(".scmkeep");
       verify(modifyCommandBuilder).setCommitMessage("delete folders");
       verify(modifyCommandBuilder).setBranch("master");
@@ -249,9 +234,7 @@ class FolderServiceTest {
   void shouldCreateScmKeepIfParentFolderIsEmptyAfterDeletion() throws IOException {
     when(browserResult.getFile()).thenReturn(
       createFileObject("folderWithOneFile",
-        createFileObject("folderWithOneFile/subfolder",
-          createFileObject("folderWithOneFile/subfolder/.scmkeep")
-        )
+        createEmptyDirectoryObject("folderWithOneFile/subfolder")
       )
     );
     when(modifyCommandBuilder.execute()).thenReturn("1337");
@@ -260,6 +243,12 @@ class FolderServiceTest {
     folderService.delete(repository.getNamespace(), repository.getName(), "master", "folderWithOneFile/subfolder", "delete subfolder");
 
     verify(modifyCommandBuilder).createFile("folderWithOneFile/.scmkeep");
+  }
+
+  private FileObject createEmptyDirectoryObject(String path) {
+    FileObject directory = createFileObject(path);
+    directory.setDirectory(true);
+    return directory;
   }
 
   private FileObject createFileObject(String path, FileObject ...children) {

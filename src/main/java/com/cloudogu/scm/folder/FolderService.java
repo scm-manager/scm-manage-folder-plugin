@@ -44,7 +44,6 @@ import sonia.scm.util.ValidationUtil;
 import javax.annotation.CheckForNull;
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -109,7 +108,6 @@ public class FolderService {
         .setDisableLastCommit(true)
         .setDisablePreProcessors(true)
         .setDisableSubRepositoryDetection(true)
-        .setRecursive(true)
         .setPath(parentPath.toString());
 
       if (!Strings.isNullOrEmpty(branch)) {
@@ -143,7 +141,7 @@ public class FolderService {
 
       // delete files and folders with modify command
       final ModifyCommandBuilder modifyCommand = repositoryService.getModifyCommand();
-      deleteFileRecursively(file, modifyCommand);
+      modifyCommand.deleteFile(file.getPath(), true);
       // create keep file if parent would be empty after deletion
       if (createScmKeepInParent) {
         createKeepFile(parentPath.toString(), modifyCommand);
@@ -169,15 +167,6 @@ public class FolderService {
     }
     contextBuilder.in("path", path);
     return contextBuilder;
-  }
-
-  private void deleteFileRecursively(FileObject file, ModifyCommandBuilder modifyCommand) {
-    if (file.isDirectory()) {
-      for (FileObject child : file.getChildren()) {
-        deleteFileRecursively(child, modifyCommand);
-      }
-    }
-    modifyCommand.deleteFile(file.getPath());
   }
 
   private String ensureTrailingSlash(String path) {

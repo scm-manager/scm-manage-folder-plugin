@@ -30,7 +30,7 @@ plugins {
 dependencies {}
 
 scmPlugin {
-  scmVersion = "2.21.0"
+  scmVersion = "2.23.1-SNAPSHOT"
   displayName = "Manage Folder Plugin"
   description = "Manage folders through the web interface."
 
