@@ -122,7 +122,7 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
       <Button
         className="is-marginless"
         action={submit}
-        disabled={!commitMessage || !!folderNameError}
+        disabled={!commitMessage || !folderName || !!folderNameError}
         loading={loading}
         color="primary"
       >
