@@ -36,8 +36,8 @@ scmPlugin {
   displayName = "Manage Folder Plugin"
   description = "Manage folders through the web interface."
 
-  // author = "Your name"
-  // category = "Workflow"
+  author = "Cloudogu GmbH"
+  category = "Workflow"
 
   openapi {
     packages = [
