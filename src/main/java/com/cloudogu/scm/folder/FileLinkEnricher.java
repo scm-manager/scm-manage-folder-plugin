@@ -23,6 +23,7 @@
  */
 package com.cloudogu.scm.folder;
 
+import com.cloudogu.scm.editor.ChangeGuardCheck;
 import com.cloudogu.scm.editor.EditorPreconditions;
 import sonia.scm.api.v2.resources.Enrich;
 import sonia.scm.api.v2.resources.HalAppender;
@@ -43,11 +44,13 @@ import javax.inject.Provider;
 public class FileLinkEnricher implements HalEnricher {
 
   private final EditorPreconditions editorPreconditions;
+  private final ChangeGuardCheck changeGuardCheck;
   private final Provider<ScmPathInfoStore> scmPathInfoStore;
 
   @Inject
-  public FileLinkEnricher(EditorPreconditions editorPreconditions, Provider<ScmPathInfoStore> scmPathInfoStore) {
+  public FileLinkEnricher(EditorPreconditions editorPreconditions, ChangeGuardCheck changeGuardCheck, Provider<ScmPathInfoStore> scmPathInfoStore) {
     this.editorPreconditions = editorPreconditions;
+    this.changeGuardCheck = changeGuardCheck;
     this.scmPathInfoStore = scmPathInfoStore;
   }
 
@@ -60,16 +63,18 @@ public class FileLinkEnricher implements HalEnricher {
     if (fileObject.isDirectory() && editorPreconditions.isEditable(namespaceAndName, browserResult)) {
       LinkBuilder linkBuilder = new LinkBuilder(scmPathInfoStore.get().get(), FolderResource.class);
 
-      appender.appendLink("createFolder", linkBuilder
-        .method("createFolder")
-        .parameters(
-          namespaceAndName.getNamespace(),
-          namespaceAndName.getName(),
-          "PATH_PART"
-        ).href().replace("PATH_PART", fixObjectPath(fileObject.getPath()) + "{path}")
-      );
+      if (changeGuardCheck.canCreateFilesIn(namespaceAndName, browserResult.getRequestedRevision(), browserResult.getFile().getPath()).isEmpty()) {
+        appender.appendLink("createFolder", linkBuilder
+          .method("createFolder")
+          .parameters(
+            namespaceAndName.getNamespace(),
+            namespaceAndName.getName(),
+            "PATH_PART"
+          ).href().replace("PATH_PART", fixObjectPath(fileObject.getPath()) + "{path}")
+        );
+      }
 
-      if (isNotRoot(fileObject)) {
+      if (isNotRoot(fileObject) && changeGuardCheck.isDeletable(namespaceAndName, browserResult.getRequestedRevision(), browserResult.getFile().getPath()).isEmpty()) {
         appender.appendLink("deleteFolder", linkBuilder
           .method("deleteFolder")
           .parameters(namespaceAndName.getNamespace(), namespaceAndName.getName(), fileObject.getPath()).href()

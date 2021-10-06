@@ -211,7 +211,7 @@ class FolderServiceTest {
       when(modifyCommandBuilder.execute()).thenReturn("1337");
       when(logCommandBuilder.getChangeset("1337")).thenReturn(new Changeset("1337", new Date().getTime(), new Person("Trillian")));
 
-      final Changeset changeset = folderService.delete(repository.getNamespace(), repository.getName(), "master", "root/folder", "delete folders");
+      final Changeset changeset = folderService.delete(repository.getNamespace(), repository.getName(), "master", "root", "delete folders");
 
       verify(modifyCommandBuilder).deleteFile("root", true);
       verify(modifyCommandBuilder, never()).createFile(".scmkeep");
