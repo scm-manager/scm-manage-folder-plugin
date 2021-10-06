@@ -20,7 +20,11 @@
         "label": "Erstellen"
       },
       "name": {
-        "label": "Ordnername"
+        "label": "Ordnername",
+        "errors": {
+          "leadingSlash": "Der Ordnerpfad darf nicht mit einem \"/\" beginnen",
+          "empty": "Der Ordnerpfad darf nicht leer sein"
+        }
       },
       "path": {
         "label": "Pfad"

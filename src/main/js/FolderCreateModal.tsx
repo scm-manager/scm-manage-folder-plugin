@@ -22,31 +22,72 @@
  * SOFTWARE.
  */
 import React, { FC, useState } from "react";
-import { ButtonGroup, InputField, Modal, Textarea, Button, CommitAuthor } from "@scm-manager/ui-components";
+import {
+  ButtonGroup,
+  InputField,
+  Modal,
+  Textarea,
+  Button,
+  CommitAuthor,
+  apiClient,
+  ErrorNotification
+} from "@scm-manager/ui-components";
 import { useTranslation } from "react-i18next";
-import { File } from "@scm-manager/ui-types";
-
-type Result = {
-  name: string;
-  message: string;
-};
+import { Changeset, File, Link, Repository } from "@scm-manager/ui-types";
+import { CommitDto } from "./types";
+import { createRedirectUrl } from "./createRedirectUrl";
+import { useHistory } from "react-router-dom";
 
 type Props = {
+  repository: Repository;
   revision?: string;
   path?: string;
   sources: File;
   onClose: () => void;
-  loading: boolean;
-  onSubmit: (result: Result) => void;
 };
 
-const FolderCreateModal: FC<Props> = ({ sources, revision, onClose, onSubmit, loading }) => {
+const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, repository }) => {
   const [t] = useTranslation("plugins");
   const [folderName, setFolderName] = useState("");
   const [commitMessage, setCommitMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState();
+  const [folderNameError, setFolderNameError] = useState("");
+  const history = useHistory();
+
+  const updateFolderName = (newFolderName: string) => {
+    if (newFolderName.startsWith("/")) {
+      setFolderNameError("scm-manage-folder-plugin.create.name.errors.leadingSlash");
+    } else if (newFolderName.trim() === "") {
+      setFolderNameError("scm-manage-folder-plugin.create.name.errors.empty");
+    } else {
+      setFolderNameError("");
+    }
+    setFolderName(newFolderName);
+  };
+
+  const submit = () => {
+    const createLink = (sources._links.createFolder as Link).href.replace("{path}", folderName);
+    const payload: CommitDto = {
+      commitMessage,
+      branch: revision || ""
+    };
+    setLoading(true);
+    apiClient
+      .post(createLink, payload)
+      .then(response => response.json())
+      .then((changeset: Changeset) => {
+        history.push(
+          createRedirectUrl(repository, changeset, `${path}${!path || path.endsWith("/") ? "" : "/"}${folderName}`)
+        );
+      })
+      .catch(setError)
+      .finally(() => setLoading(false));
+  };
 
   const body = (
     <>
+      {error ? <ErrorNotification error={error} /> : null}
       <InputField label={t("scm-manage-folder-plugin.create.branch.label")} value={revision} disabled={true} />
       <InputField
         label={t("scm-manage-folder-plugin.create.path.label")}
@@ -56,10 +97,14 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, onClose, onSubmit, lo
       <InputField
         label={t("scm-manage-folder-plugin.create.name.label")}
         value={folderName}
-        onChange={setFolderName}
+        onChange={updateFolderName}
         disabled={loading}
+        errorMessage={folderNameError && t(folderNameError)}
+        validationError={!!folderNameError}
       />
-      <CommitAuthor />
+      <div className="mb-2 mt-5">
+        <CommitAuthor />
+      </div>
       <Textarea
         placeholder={t("scm-manage-folder-plugin.create.commit.placeholder")}
         onChange={message => setCommitMessage(message)}
@@ -76,7 +121,8 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, onClose, onSubmit, lo
       </Button>
       <Button
         className="is-marginless"
-        action={() => onSubmit({ message: commitMessage, name: folderName })}
+        action={submit}
+        disabled={!commitMessage || !!folderNameError}
         loading={loading}
         color="primary"
       >

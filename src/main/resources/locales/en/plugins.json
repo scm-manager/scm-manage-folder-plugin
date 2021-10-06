@@ -20,7 +20,11 @@
         "label": "Create"
       },
       "name": {
-        "label": "Folder name"
+        "label": "Folder name",
+        "errors": {
+          "leadingSlash": "The folder path must not start with a \"/\"",
+          "empty": "The folder path must not be empty"
+        }
       },
       "path": {
         "label": "Path"

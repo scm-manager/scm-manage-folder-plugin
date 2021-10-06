@@ -23,21 +23,63 @@
  */
 import React, { FC, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, ButtonGroup, CommitAuthor, Modal, Textarea } from "@scm-manager/ui-components";
+import {
+  apiClient,
+  Button,
+  ButtonGroup,
+  CommitAuthor,
+  ErrorNotification,
+  Modal,
+  Textarea
+} from "@scm-manager/ui-components";
+import { Changeset, File, Link, Repository } from "@scm-manager/ui-types/src/index";
+import { useHistory, useLocation } from "react-router-dom";
+import { CommitDto } from "./types";
+import { createRedirectUrl } from "./createRedirectUrl";
 
 type Props = {
-  onCommit: (p: string) => void;
+  repository: Repository;
+  revision?: string;
+  path?: string;
+  sources: File;
   onClose: () => void;
-  loading: boolean;
 };
 
-const FolderDeleteModal: FC<Props> = ({ onCommit, onClose, loading }) => {
+const FolderDeleteModal: FC<Props> = ({ onClose, revision, repository, sources }) => {
   const [t] = useTranslation("plugins");
   const [commitMessage, setCommitMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState();
+  const history = useHistory();
+  const location = useLocation();
+
+  const submit = () => {
+    const createLink = (sources._links.deleteFolder as Link).href;
+    const payload: CommitDto = {
+      commitMessage,
+      branch: revision || ""
+    };
+    setLoading(true);
+    apiClient
+      .post(createLink, payload)
+      .then(response => response.json())
+      .then((newCommit: Changeset) => {
+        const filePath = location.pathname
+          .substr(0, location.pathname.length - sources.name.length - 1)
+          .split("/sources/" + revision)[1];
+        history.push(createRedirectUrl(repository, newCommit, filePath));
+        onClose();
+      })
+      .catch(setError)
+      .finally(() => setLoading(false));
+  };
 
   const body = (
     <>
-      <CommitAuthor />
+      {error ? <ErrorNotification error={error} /> : null}
+      <div className="mb-3">
+        <CommitAuthor />
+      </div>
       <Textarea
         placeholder={t("scm-manage-folder-plugin.delete.commit.placeholder")}
         onChange={setCommitMessage}
@@ -60,7 +102,7 @@ const FolderDeleteModal: FC<Props> = ({ onCommit, onClose, loading }) => {
         color="primary"
         disabled={!commitMessage}
         loading={loading}
-        action={() => onCommit(commitMessage)}
+        action={submit}
       />
     </ButtonGroup>
   );
@@ -68,7 +110,7 @@ const FolderDeleteModal: FC<Props> = ({ onCommit, onClose, loading }) => {
   return (
     <Modal
       title={t("scm-manage-folder-plugin.delete.title")}
-      closeFunction={() => onClose()}
+      closeFunction={onClose}
       body={body}
       footer={footer}
       active={true}

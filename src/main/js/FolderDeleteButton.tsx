@@ -22,14 +22,10 @@
  * SOFTWARE.
  */
 import React, { FC, useState } from "react";
-import { Changeset, File, Link, Repository } from "@scm-manager/ui-types";
+import { File, Repository } from "@scm-manager/ui-types";
 import { useTranslation } from "react-i18next";
 import styled from "styled-components";
 import FolderDeleteModal from "./FolderDeleteModal";
-import { CommitDto } from "./types";
-import { apiClient } from "@scm-manager/ui-components";
-import { useHistory, useLocation } from "react-router-dom";
-import { createRedirectUrl } from "./createRedirectUrl";
 
 const Button = styled.span`
   width: 50px;
@@ -46,41 +42,23 @@ type Props = {
   sources: File;
 };
 
-const FolderDeleteButton: FC<Props> = ({ sources, path, revision, repository }) => {
+const FolderDeleteButton: FC<Props> = ({ sources, revision, repository }) => {
   const [t] = useTranslation("plugins");
   const [modalVisible, setModalVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const history = useHistory();
-  const location = useLocation();
 
   if (!sources || !("deleteFolder" in sources._links)) {
     return null;
   }
 
-  const submit = (message: string) => {
-    const createLink = (sources._links.deleteFolder as Link).href;
-    const payload: CommitDto = {
-      commitMessage: message,
-      branch: revision || ""
-    };
-    setLoading(true);
-    apiClient
-      .post(createLink, payload)
-      .then(response => response.json())
-      .then((newCommit: Changeset) => {
-        const filePath = location.pathname
-          .substr(0, location.pathname.length - sources.name.length - 1)
-          .split("/sources/" + revision)[1];
-        history.push(createRedirectUrl(repository, newCommit, filePath));
-        setModalVisible(false);
-      })
-      .catch(console.log);
-  };
-
   return (
     <>
       {modalVisible ? (
-        <FolderDeleteModal onCommit={submit} onClose={() => setModalVisible(false)} loading={loading} />
+        <FolderDeleteModal
+          onClose={() => setModalVisible(false)}
+          repository={repository}
+          sources={sources}
+          revision={revision}
+        />
       ) : null}
       <Button
         className="button"
