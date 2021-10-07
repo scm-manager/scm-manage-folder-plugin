@@ -6,4 +6,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
-- First implementation
+- First implementation ([#1](https://github.com/scm-manager/scm-manage-folder-plugin/pull/1))
