@@ -32,10 +32,46 @@ import {
   Modal,
   Textarea
 } from "@scm-manager/ui-components";
-import { Changeset, File, Link, Repository } from "@scm-manager/ui-types/src/index";
+import { Changeset, File, Link, Repository } from "@scm-manager/ui-types";
 import { useHistory, useLocation } from "react-router-dom";
 import { Commit } from "./types";
 import { createRedirectUrl } from "./createRedirectUrl";
+import { useMutation } from "react-query";
+
+type DeleteFolderRequest = {
+  commit: Commit;
+  sources: File;
+  repository: Repository;
+  revision?: string;
+};
+
+const useDeleteFolder = () => {
+  const history = useHistory();
+  const location = useLocation();
+
+  const { mutate, data, isLoading, error } = useMutation<Changeset, Error, DeleteFolderRequest>(
+    ({ commit, sources }) => {
+      const link = (sources._links.deleteFolder as Link).href;
+      return apiClient.post(link, commit).then(response => response.json());
+    },
+    {
+      onSuccess: async (changeset, { repository, revision, sources }) => {
+        const filePath = location.pathname
+          .substr(0, location.pathname.length - sources.name.length - 1)
+          .split("/sources/" + revision)[1];
+        history.push(createRedirectUrl(repository, changeset, filePath));
+      }
+    }
+  );
+  return {
+    remove: (repository: Repository, parent: File, commit: Commit, revision?: string) => {
+      mutate({ repository, commit, sources: parent, revision });
+    },
+    isLoading,
+    error,
+    changeset: data
+  };
+};
 
 type Props = {
   repository: Repository;
@@ -48,31 +84,18 @@ type Props = {
 const FolderDeleteModal: FC<Props> = ({ onClose, revision, repository, sources }) => {
   const [t] = useTranslation("plugins");
   const [commitMessage, setCommitMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
-  const history = useHistory();
-  const location = useLocation();
+  const { remove, error, isLoading } = useDeleteFolder();
 
-  const submit = () => {
-    const createLink = (sources._links.deleteFolder as Link).href;
-    const payload: Commit = {
-      commitMessage,
-      branch: revision || ""
-    };
-    setLoading(true);
-    apiClient
-      .post(createLink, payload)
-      .then(response => response.json())
-      .then((newCommit: Changeset) => {
-        const filePath = location.pathname
-          .substr(0, location.pathname.length - sources.name.length - 1)
-          .split("/sources/" + revision)[1];
-        history.push(createRedirectUrl(repository, newCommit, filePath));
-        onClose();
-      })
-      .catch(setError)
-      .finally(() => setLoading(false));
-  };
+  const submit = () =>
+    remove(
+      repository,
+      sources,
+      {
+        commitMessage,
+        branch: revision || ""
+      },
+      revision
+    );
 
   const body = (
     <>
@@ -83,7 +106,7 @@ const FolderDeleteModal: FC<Props> = ({ onClose, revision, repository, sources }
       <Textarea
         placeholder={t("scm-manage-folder-plugin.delete.commit.placeholder")}
         onChange={setCommitMessage}
-        disabled={loading}
+        disabled={isLoading}
       />
     </>
   );
@@ -94,14 +117,14 @@ const FolderDeleteModal: FC<Props> = ({ onClose, revision, repository, sources }
         className="is-marginless"
         label={t("scm-manage-folder-plugin.delete.cancel.label")}
         action={onClose}
-        disabled={loading}
+        disabled={isLoading}
       />
       <Button
         className="is-marginless"
         label={t("scm-manage-folder-plugin.delete.submit.label")}
         color="primary"
         disabled={!commitMessage}
-        loading={loading}
+        loading={isLoading}
         action={submit}
       />
     </ButtonGroup>
