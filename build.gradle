@@ -28,11 +28,11 @@ plugins {
 }
 
 dependencies {
-  plugin "sonia.scm.plugins:scm-editor-plugin:2.3.2-SNAPSHOT"
+  plugin "sonia.scm.plugins:scm-editor-plugin:2.4.0"
 }
 
 scmPlugin {
-  scmVersion = "2.23.1-SNAPSHOT"
+  scmVersion = "2.24.0"
   displayName = "Manage Folder Plugin"
   description = "Manage folders through the web interface."
 
