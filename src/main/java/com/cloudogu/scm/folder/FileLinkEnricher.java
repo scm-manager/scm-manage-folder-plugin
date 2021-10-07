@@ -58,7 +58,7 @@ public class FileLinkEnricher implements HalEnricher {
   public void enrich(HalEnricherContext context, HalAppender appender) {
     NamespaceAndName namespaceAndName = context.oneRequireByType(NamespaceAndName.class);
     FileObject fileObject = context.oneRequireByType(FileObject.class);
-    final BrowserResult browserResult = context.oneRequireByType(BrowserResult.class);
+    BrowserResult browserResult = context.oneRequireByType(BrowserResult.class);
 
     if (fileObject.isDirectory() && editorPreconditions.isEditable(namespaceAndName, browserResult)) {
       LinkBuilder linkBuilder = new LinkBuilder(scmPathInfoStore.get().get(), FolderResource.class);

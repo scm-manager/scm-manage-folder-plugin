@@ -66,7 +66,7 @@ public class FolderResource {
                                @PathParam("name") String name,
                                @Nullable @PathParam("path") String path,
                                @Valid CommitDto dto) throws IOException {
-    final Changeset newCommit = folderService.create(namespace, name, dto.getBranch(), path, dto.getCommitMessage());
+    Changeset newCommit = folderService.create(namespace, name, dto.getBranch(), path, dto.getCommitMessage());
     ChangesetDto newCommitDto = changesetMapper.map(newCommit, repositoryManager.get(new NamespaceAndName(namespace, name)));
     return Response.status(CREATED).entity(newCommitDto).build();
   }

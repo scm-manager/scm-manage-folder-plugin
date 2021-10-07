@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-export type CommitDto = {
+export type Commit = {
   commitMessage: string;
   branch: string;
 };

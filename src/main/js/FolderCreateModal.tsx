@@ -34,7 +34,7 @@ import {
 } from "@scm-manager/ui-components";
 import { useTranslation } from "react-i18next";
 import { Changeset, File, Link, Repository } from "@scm-manager/ui-types";
-import { CommitDto } from "./types";
+import { Commit } from "./types";
 import { createRedirectUrl } from "./createRedirectUrl";
 import { useHistory } from "react-router-dom";
 
@@ -68,7 +68,7 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
 
   const submit = () => {
     const createLink = (sources._links.createFolder as Link).href.replace("{path}", folderName);
-    const payload: CommitDto = {
+    const payload: Commit = {
       commitMessage,
       branch: revision || ""
     };

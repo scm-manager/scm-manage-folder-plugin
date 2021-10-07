@@ -39,5 +39,11 @@
         "label": "Cancel"
       }
     }
+  },
+  "errors": {
+    "B0Skx4uOG1": {
+      "displayName": "This path is no directory",
+      "description": "The given path is no directory and therefore has not been deleted."
+    }
   }
 }

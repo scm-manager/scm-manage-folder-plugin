@@ -34,7 +34,7 @@ import {
 } from "@scm-manager/ui-components";
 import { Changeset, File, Link, Repository } from "@scm-manager/ui-types/src/index";
 import { useHistory, useLocation } from "react-router-dom";
-import { CommitDto } from "./types";
+import { Commit } from "./types";
 import { createRedirectUrl } from "./createRedirectUrl";
 
 type Props = {
@@ -55,7 +55,7 @@ const FolderDeleteModal: FC<Props> = ({ onClose, revision, repository, sources }
 
   const submit = () => {
     const createLink = (sources._links.deleteFolder as Link).href;
-    const payload: CommitDto = {
+    const payload: Commit = {
       commitMessage,
       branch: revision || ""
     };
