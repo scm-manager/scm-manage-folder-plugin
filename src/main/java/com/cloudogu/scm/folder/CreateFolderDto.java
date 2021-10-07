@@ -21,9 +21,26 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+package com.cloudogu.scm.folder;
 
-import { binder } from "@scm-manager/ui-extensions";
-import SourcesActionbar from "./SourcesActionbar";
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-binder.bind("repos.sources.actionbar", SourcesActionbar, ({ sources }) => !sources || sources.directory);
-binder.bind("repos.sources.empty.actionbar", SourcesActionbar, ({ sources }) => !sources || sources.directory);
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
+@Getter
+@Setter
+@NoArgsConstructor
+public class CreateFolderDto extends CommitDto {
+
+  @NotNull
+  @Size(min = 1)
+  private String folderName;
+
+  public CreateFolderDto(@NotNull @Size(min = 1) String commitMessage, String branch, String expectedRevision, String folderName) {
+    super(commitMessage, branch, expectedRevision);
+    this.folderName = folderName;
+  }
+}

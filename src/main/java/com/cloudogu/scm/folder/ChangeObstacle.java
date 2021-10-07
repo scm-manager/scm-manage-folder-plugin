@@ -21,9 +21,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+package com.cloudogu.scm.folder;
 
-import { binder } from "@scm-manager/ui-extensions";
-import SourcesActionbar from "./SourcesActionbar";
+public interface ChangeObstacle {
 
-binder.bind("repos.sources.actionbar", SourcesActionbar, ({ sources }) => !sources || sources.directory);
-binder.bind("repos.sources.empty.actionbar", SourcesActionbar, ({ sources }) => !sources || sources.directory);
+  String getMessage();
+
+  String getKey();
+}

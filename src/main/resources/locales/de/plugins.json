@@ -1,0 +1,39 @@
+{
+  "scm-manage-folder-plugin": {
+    "delete": {
+      "tooltip": "Ordner löschen",
+      "title": "Ordner löschen",
+      "submit": {
+        "label": "Löschen"
+      },
+      "cancel": {
+        "label": "Abbrechen"
+      },
+      "commit": {
+        "placeholder": "Commit Nachricht"
+      }
+    },
+    "create": {
+      "tooltip": "Ordner erstellen",
+      "title": "Ordnererstellung",
+      "submit": {
+        "label": "Erstellen"
+      },
+      "name": {
+        "label": "Ordnername"
+      },
+      "path": {
+        "label": "Pfad"
+      },
+      "commit": {
+        "placeholder": "Commit Nachricht"
+      },
+      "branch": {
+        "label": "Branch"
+      },
+      "cancel": {
+        "label": "Abbrechen"
+      }
+    }
+  }
+}

@@ -21,9 +21,51 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+import React, { FC, useState } from "react";
+import { File, Repository } from "@scm-manager/ui-types";
+import { useTranslation } from "react-i18next";
+import styled from "styled-components";
+import FolderDeleteModal from "./FolderDeleteModal";
 
-import { binder } from "@scm-manager/ui-extensions";
-import SourcesActionbar from "./SourcesActionbar";
+const Button = styled.span`
+  width: 50px;
+  color: #33b2e8;
+  &:hover {
+    color: #363636;
+  }
+`;
 
-binder.bind("repos.sources.actionbar", SourcesActionbar, ({ sources }) => !sources || sources.directory);
-binder.bind("repos.sources.empty.actionbar", SourcesActionbar, ({ sources }) => !sources || sources.directory);
+type Props = {
+  repository: Repository;
+  revision?: string;
+  path?: string;
+  sources: File;
+};
+
+const FolderDeleteButton: FC<Props> = ({ sources, path, revision }) => {
+  const [t] = useTranslation("plugins");
+  const [modalVisible, setModalVisible] = useState(false);
+
+  if (!sources || !("deleteFolder" in sources._links)) {
+    return null;
+  }
+
+  const submit = () => {};
+
+  return (
+    <>
+      {modalVisible ? (
+        <FolderDeleteModal onCommit={submit} onClose={() => setModalVisible(false)} loading={false} />
+      ) : null}
+      <Button
+        className="button"
+        title={t("scm-manage-folder-plugin.delete.tooltip")}
+        onClick={() => setModalVisible(true)}
+      >
+        <i className="fas fa-trash" />
+      </Button>
+    </>
+  );
+};
+
+export default FolderDeleteButton;
