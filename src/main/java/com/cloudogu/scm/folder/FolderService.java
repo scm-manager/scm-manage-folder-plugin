@@ -50,7 +50,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static sonia.scm.ScmConstraintViolationException.Builder.doThrow;
 
 public class FolderService {
-  static final byte[] KEEP_FILE_CONTENT = "This file was created automatically.".getBytes(UTF_8);
+  static final byte[] KEEP_FILE_CONTENT = "This automatically generated file ensures that the version control system keeps the encapsulating folder, but has no further purpose.".getBytes(UTF_8);
   static final String KEEP_FILE_NAME = ".scmkeep";
   private final RepositoryServiceFactory repositoryServiceFactory;
 

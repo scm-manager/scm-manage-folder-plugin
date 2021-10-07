@@ -23,15 +23,17 @@
  */
 import { Repository, Changeset } from "@scm-manager/ui-types";
 
+export const getBranch = (changeset: Changeset) =>
+  changeset._embedded &&
+  changeset._embedded.branches &&
+  changeset._embedded.branches[0] &&
+  changeset._embedded.branches[0].name
+    ? changeset._embedded.branches[0].name
+    : changeset.id;
+
 export const createRedirectUrl = (repository: Repository, newCommit: Changeset, path?: string) => {
-  const newRevision =
-    newCommit._embedded &&
-    newCommit._embedded.branches &&
-    newCommit._embedded.branches[0] &&
-    newCommit._embedded.branches[0].name
-      ? newCommit._embedded.branches[0].name
-      : newCommit.id;
+  const newRevision = getBranch(newCommit);
   return `/repo/${repository.namespace}/${repository.name}/code/sources/${encodeURIComponent(newRevision)}${
     !path || path.startsWith("/") ? "" : "/"
-  }${path}`;
+  }${path}${!path || path.endsWith("/") ? "" : "/"}`;
 };
