@@ -21,27 +21,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+import { Repository, Changeset } from "@scm-manager/ui-types";
 
+export const getBranch = (changeset: Changeset) =>
+  changeset._embedded &&
+  changeset._embedded.branches &&
+  changeset._embedded.branches[0] &&
+  changeset._embedded.branches[0].name
+    ? changeset._embedded.branches[0].name
+    : changeset.id;
 
-plugins {
-  id 'org.scm-manager.smp' version '0.8.5'
-}
-
-dependencies {
-  plugin "sonia.scm.plugins:scm-editor-plugin:2.4.0"
-}
-
-scmPlugin {
-  scmVersion = "2.24.0"
-  displayName = "Manage Folder Plugin"
-  description = "Manage folders through the web interface."
-
-  author = "Cloudogu GmbH"
-  category = "Workflow"
-
-  openapi {
-    packages = [
-      "com.cloudogu.scm.emptyfolder"
-    ]
-  }
-}
+export const createRedirectUrl = (repository: Repository, newCommit: Changeset, path?: string) => {
+  const newRevision = getBranch(newCommit);
+  return `/repo/${repository.namespace}/${repository.name}/code/sources/${encodeURIComponent(newRevision)}${
+    !path || path.startsWith("/") ? "" : "/"
+  }${path}${!path || path.endsWith("/") ? "" : "/"}`;
+};

@@ -21,27 +21,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+package com.cloudogu.scm.folder;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-plugins {
-  id 'org.scm-manager.smp' version '0.8.5'
-}
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
-dependencies {
-  plugin "sonia.scm.plugins:scm-editor-plugin:2.4.0"
-}
-
-scmPlugin {
-  scmVersion = "2.24.0"
-  displayName = "Manage Folder Plugin"
-  description = "Manage folders through the web interface."
-
-  author = "Cloudogu GmbH"
-  category = "Workflow"
-
-  openapi {
-    packages = [
-      "com.cloudogu.scm.emptyfolder"
-    ]
-  }
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public class CommitDto {
+  @NotNull
+  @Size(min = 1)
+  private String commitMessage;
+  private String branch;
 }

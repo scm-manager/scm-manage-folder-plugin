@@ -22,26 +22,7 @@
  * SOFTWARE.
  */
 
-
-plugins {
-  id 'org.scm-manager.smp' version '0.8.5'
-}
-
-dependencies {
-  plugin "sonia.scm.plugins:scm-editor-plugin:2.4.0"
-}
-
-scmPlugin {
-  scmVersion = "2.24.0"
-  displayName = "Manage Folder Plugin"
-  description = "Manage folders through the web interface."
-
-  author = "Cloudogu GmbH"
-  category = "Workflow"
-
-  openapi {
-    packages = [
-      "com.cloudogu.scm.emptyfolder"
-    ]
-  }
-}
+export type Commit = {
+  commitMessage: string;
+  branch: string;
+};

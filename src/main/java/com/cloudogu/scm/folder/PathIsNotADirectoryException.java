@@ -21,27 +21,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+package com.cloudogu.scm.folder;
 
+import sonia.scm.ContextEntry;
+import sonia.scm.ExceptionWithContext;
 
-plugins {
-  id 'org.scm-manager.smp' version '0.8.5'
-}
+import java.util.List;
 
-dependencies {
-  plugin "sonia.scm.plugins:scm-editor-plugin:2.4.0"
-}
+public class PathIsNotADirectoryException extends ExceptionWithContext {
+  protected PathIsNotADirectoryException(List<ContextEntry> context, String message) {
+    super(context, message);
+  }
 
-scmPlugin {
-  scmVersion = "2.24.0"
-  displayName = "Manage Folder Plugin"
-  description = "Manage folders through the web interface."
-
-  author = "Cloudogu GmbH"
-  category = "Workflow"
-
-  openapi {
-    packages = [
-      "com.cloudogu.scm.emptyfolder"
-    ]
+  @Override
+  public String getCode() {
+    return "B0Skx4uOG1";
   }
 }

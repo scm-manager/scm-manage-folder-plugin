@@ -22,3 +22,8 @@
  * SOFTWARE.
  */
 
+import { binder } from "@scm-manager/ui-extensions";
+import SourcesActionbar from "./SourcesActionbar";
+
+binder.bind("repos.sources.actionbar", SourcesActionbar, ({ sources }) => !sources || sources.directory);
+binder.bind("repos.sources.empty.actionbar", SourcesActionbar, ({ sources }) => !sources || sources.directory);

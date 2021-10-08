@@ -1,0 +1,49 @@
+{
+  "scm-manage-folder-plugin": {
+    "delete": {
+      "tooltip": "Delete folder",
+      "title": "Folder deletion",
+      "submit": {
+        "label": "Delete"
+      },
+      "cancel": {
+        "label": "Cancel"
+      },
+      "commit": {
+        "placeholder": "Commit message"
+      }
+    },
+    "create": {
+      "tooltip": "Create folder",
+      "title": "Folder creation",
+      "submit": {
+        "label": "Create"
+      },
+      "name": {
+        "label": "Folder name",
+        "errors": {
+          "leadingSlash": "The folder path must not start with a \"/\"",
+          "empty": "The folder path must not be empty"
+        }
+      },
+      "path": {
+        "label": "Path"
+      },
+      "commit": {
+        "placeholder": "Commit message"
+      },
+      "branch": {
+        "label": "Branch"
+      },
+      "cancel": {
+        "label": "Cancel"
+      }
+    }
+  },
+  "errors": {
+    "B0Skx4uOG1": {
+      "displayName": "This path is no directory",
+      "description": "The given path is no directory and therefore has not been deleted."
+    }
+  }
+}

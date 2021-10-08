@@ -1,0 +1,49 @@
+{
+  "scm-manage-folder-plugin": {
+    "delete": {
+      "tooltip": "Ordner löschen",
+      "title": "Ordner löschen",
+      "submit": {
+        "label": "Löschen"
+      },
+      "cancel": {
+        "label": "Abbrechen"
+      },
+      "commit": {
+        "placeholder": "Commit Nachricht"
+      }
+    },
+    "create": {
+      "tooltip": "Ordner erstellen",
+      "title": "Ordnererstellung",
+      "submit": {
+        "label": "Erstellen"
+      },
+      "name": {
+        "label": "Ordnername",
+        "errors": {
+          "leadingSlash": "Der Ordnerpfad darf nicht mit einem \"/\" beginnen",
+          "empty": "Der Ordnerpfad darf nicht leer sein"
+        }
+      },
+      "path": {
+        "label": "Pfad"
+      },
+      "commit": {
+        "placeholder": "Commit Nachricht"
+      },
+      "branch": {
+        "label": "Branch"
+      },
+      "cancel": {
+        "label": "Abbrechen"
+      }
+    }
+  },
+  "errors": {
+    "B0Skx4uOG1": {
+      "displayName": "Der Pfad ist kein Verzeichnis",
+      "description": "Der angegebene Pfad wurde nicht gelöscht, da es sich nicht um ein Verzeichnis handelt."
+    }
+  }
+}
