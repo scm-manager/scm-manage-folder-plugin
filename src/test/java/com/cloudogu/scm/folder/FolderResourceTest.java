@@ -34,6 +34,7 @@ import sonia.scm.api.v2.resources.ChangesetDto;
 import sonia.scm.api.v2.resources.ChangesetToChangesetDtoMapper;
 import sonia.scm.repository.Changeset;
 import sonia.scm.repository.Person;
+import sonia.scm.repository.RepositoryManager;
 import sonia.scm.web.JsonMockHttpRequest;
 import sonia.scm.web.RestDispatcher;
 
@@ -54,6 +55,9 @@ import static org.mockito.Mockito.when;
 class FolderResourceTest {
   @Mock
   ChangesetToChangesetDtoMapper mapper;
+
+  @Mock
+  RepositoryManager repositoryManager;
 
   @Mock
   FolderService folderService;
