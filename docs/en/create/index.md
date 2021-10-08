@@ -11,5 +11,5 @@ multiple nested folders in one step.
 
 ![Dialog to create folders](assets/create-dialog.png)
 
-In the new folder, a file named `.scmkeep` is created, because you cannot craete empty folders for example in Git
+In the new folder, a file named `.scmkeep` is created, because you cannot create empty folders in for example Git
 or Mercurial. This file can be removed, as soon as there are other files in this folder.
