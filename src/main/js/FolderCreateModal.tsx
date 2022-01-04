@@ -92,6 +92,7 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
   const [commitMessage, setCommitMessage] = useState("");
   const { isLoading, error, create } = useCreateFolder();
   const [folderNameError, setFolderNameError] = useState("");
+  const submitDisabled = !commitMessage || !folderName || !!folderNameError;
 
   const updateFolderName = (newFolderName: string) => {
     if (newFolderName.startsWith("/")) {
@@ -134,6 +135,7 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
         disabled={isLoading}
         errorMessage={folderNameError && t(folderNameError)}
         validationError={!!folderNameError}
+        onReturnPressed={() => !submitDisabled && submit()}
       />
       <div className="mb-2 mt-5">
         <CommitAuthor />
@@ -143,6 +145,7 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
         onChange={message => setCommitMessage(message)}
         value={commitMessage}
         disabled={isLoading}
+        onSubmit={() => !submitDisabled && submit()}
       />
     </>
   );
@@ -152,13 +155,7 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
       <Button className="is-marginless" action={onClose} disabled={isLoading}>
         {t("scm-manage-folder-plugin.create.cancel.label")}
       </Button>
-      <Button
-        className="is-marginless"
-        action={submit}
-        disabled={!commitMessage || !folderName || !!folderNameError}
-        loading={isLoading}
-        color="primary"
-      >
+      <Button className="is-marginless" action={submit} disabled={submitDisabled} loading={isLoading} color="primary">
         {t("scm-manage-folder-plugin.create.submit.label")}
       </Button>
     </ButtonGroup>

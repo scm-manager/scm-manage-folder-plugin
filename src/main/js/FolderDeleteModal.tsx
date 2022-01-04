@@ -107,6 +107,7 @@ const FolderDeleteModal: FC<Props> = ({ onClose, revision, repository, sources }
         placeholder={t("scm-manage-folder-plugin.delete.commit.placeholder")}
         onChange={setCommitMessage}
         disabled={isLoading}
+        onSubmit={() => !!commitMessage && submit()}
       />
     </>
   );
