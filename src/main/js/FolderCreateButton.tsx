@@ -29,9 +29,8 @@ import FolderCreateModal from "./FolderCreateModal";
 
 const Button = styled.span`
   width: 50px;
-  color: #33b2e8;
   &:hover {
-    color: #363636;
+    color: #33b2e8;
   }
 `;
 
