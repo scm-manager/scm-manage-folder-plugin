@@ -85,6 +85,7 @@ const FolderDeleteModal: FC<Props> = ({ onClose, revision, repository, sources }
   const [t] = useTranslation("plugins");
   const [commitMessage, setCommitMessage] = useState("");
   const { remove, error, isLoading } = useDeleteFolder();
+  const [initialFocusNode, setInitialFocusNode] = useState<HTMLTextAreaElement | null>(null);
 
   const submit = () =>
     remove(
@@ -105,9 +106,10 @@ const FolderDeleteModal: FC<Props> = ({ onClose, revision, repository, sources }
       </div>
       <Textarea
         placeholder={t("scm-manage-folder-plugin.delete.commit.placeholder")}
-        onChange={setCommitMessage}
+        onChange={event => setCommitMessage(event.target.value)}
         disabled={isLoading}
         onSubmit={() => !!commitMessage && submit()}
+        ref={setInitialFocusNode}
       />
     </>
   );
@@ -138,6 +140,7 @@ const FolderDeleteModal: FC<Props> = ({ onClose, revision, repository, sources }
       body={body}
       footer={footer}
       active={true}
+      initialFocusNode={initialFocusNode}
     />
   );
 };

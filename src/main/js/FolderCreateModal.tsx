@@ -92,6 +92,7 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
   const [commitMessage, setCommitMessage] = useState("");
   const { isLoading, error, create } = useCreateFolder();
   const [folderNameError, setFolderNameError] = useState("");
+  const [initialFocusNode, setInitialFocusNode] = useState<HTMLInputElement | null>(null);
   const submitDisabled = !commitMessage || !folderName || !!folderNameError;
 
   const updateFolderName = (newFolderName: string) => {
@@ -131,11 +132,12 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
       <InputField
         label={t("scm-manage-folder-plugin.create.name.label")}
         value={folderName}
-        onChange={updateFolderName}
+        onChange={event => updateFolderName(event.target.value)}
         disabled={isLoading}
         errorMessage={folderNameError && t(folderNameError)}
         validationError={!!folderNameError}
         onReturnPressed={() => !submitDisabled && submit()}
+        ref={setInitialFocusNode}
       />
       <div className="mb-2 mt-5">
         <CommitAuthor />
@@ -168,6 +170,7 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
       title={t("scm-manage-folder-plugin.create.title")}
       closeFunction={onClose}
       active={true}
+      initialFocusNode={initialFocusNode}
     />
   );
 };
