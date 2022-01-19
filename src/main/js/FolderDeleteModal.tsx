@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import React, { FC, useState } from "react";
+import React, { FC, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   apiClient,
@@ -85,7 +85,7 @@ const FolderDeleteModal: FC<Props> = ({ onClose, revision, repository, sources }
   const [t] = useTranslation("plugins");
   const [commitMessage, setCommitMessage] = useState("");
   const { remove, error, isLoading } = useDeleteFolder();
-  const [initialFocusNode, setInitialFocusNode] = useState<HTMLTextAreaElement | null>(null);
+  const initialFocusRef = useRef<HTMLTextAreaElement>(null);
 
   const submit = () =>
     remove(
@@ -109,7 +109,7 @@ const FolderDeleteModal: FC<Props> = ({ onClose, revision, repository, sources }
         onChange={event => setCommitMessage(event.target.value)}
         disabled={isLoading}
         onSubmit={() => !!commitMessage && submit()}
-        ref={setInitialFocusNode}
+        ref={initialFocusRef}
       />
     </>
   );
@@ -140,7 +140,7 @@ const FolderDeleteModal: FC<Props> = ({ onClose, revision, repository, sources }
       body={body}
       footer={footer}
       active={true}
-      initialFocusNode={initialFocusNode}
+      initialFocusRef={initialFocusRef}
     />
   );
 };
