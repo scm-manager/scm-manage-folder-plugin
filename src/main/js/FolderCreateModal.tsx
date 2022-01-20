@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import React, { FC, useState } from "react";
+import React, { FC, useRef, useState } from "react";
 import {
   ButtonGroup,
   InputField,
@@ -92,7 +92,7 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
   const [commitMessage, setCommitMessage] = useState("");
   const { isLoading, error, create } = useCreateFolder();
   const [folderNameError, setFolderNameError] = useState("");
-  const [initialFocusNode, setInitialFocusNode] = useState<HTMLInputElement | null>(null);
+  const initialFocusRef = useRef<HTMLInputElement>(null);
   const submitDisabled = !commitMessage || !folderName || !!folderNameError;
 
   const updateFolderName = (newFolderName: string) => {
@@ -137,7 +137,7 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
         errorMessage={folderNameError && t(folderNameError)}
         validationError={!!folderNameError}
         onReturnPressed={() => !submitDisabled && submit()}
-        ref={setInitialFocusNode}
+        ref={initialFocusRef}
       />
       <div className="mb-2 mt-5">
         <CommitAuthor />
@@ -170,7 +170,7 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
       title={t("scm-manage-folder-plugin.create.title")}
       closeFunction={onClose}
       active={true}
-      initialFocusNode={initialFocusNode}
+      initialFocusRef={initialFocusRef}
     />
   );
 };
