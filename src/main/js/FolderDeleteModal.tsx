@@ -117,13 +117,11 @@ const FolderDeleteModal: FC<Props> = ({ onClose, revision, repository, sources }
   const footer = (
     <ButtonGroup>
       <Button
-        className="is-marginless"
         label={t("scm-manage-folder-plugin.delete.cancel.label")}
         action={onClose}
         disabled={isLoading}
       />
       <Button
-        className="is-marginless"
         label={t("scm-manage-folder-plugin.delete.submit.label")}
         color="primary"
         disabled={!commitMessage}
