@@ -154,10 +154,10 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
 
   const footer = (
     <ButtonGroup>
-      <Button className="is-marginless" action={onClose} disabled={isLoading}>
+      <Button action={onClose} disabled={isLoading}>
         {t("scm-manage-folder-plugin.create.cancel.label")}
       </Button>
-      <Button className="is-marginless" action={submit} disabled={submitDisabled} loading={isLoading} color="primary">
+      <Button action={submit} disabled={submitDisabled} loading={isLoading} color="primary">
         {t("scm-manage-folder-plugin.create.submit.label")}
       </Button>
     </ButtonGroup>
