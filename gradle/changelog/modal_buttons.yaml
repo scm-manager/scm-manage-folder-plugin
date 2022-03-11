@@ -1,0 +1,2 @@
+- type: fixed
+  description: Button margin in modal ([#6](https://github.com/scm-manager/scm-manage-folder-plugin/pull/6))
