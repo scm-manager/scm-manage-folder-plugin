@@ -26,8 +26,9 @@ import { File, Repository } from "@scm-manager/ui-types";
 import { useTranslation } from "react-i18next";
 import styled from "styled-components";
 import FolderCreateModal from "./FolderCreateModal";
+import { Button } from "@scm-manager/ui-components";
 
-const Button = styled.span`
+const StyledButton = styled(Button)`
   width: 50px;
   &:hover {
     color: #33b2e8;
@@ -60,13 +61,9 @@ const FolderCreateButton: FC<Props> = ({ sources, path, revision, repository }) 
           onClose={() => setCreationModalVisible(false)}
         />
       ) : null}
-      <Button
-        className="button"
-        title={t("scm-manage-folder-plugin.create.tooltip")}
-        onClick={() => setCreationModalVisible(true)}
-      >
+      <StyledButton title={t("scm-manage-folder-plugin.create.tooltip")} action={() => setCreationModalVisible(true)}>
         <i className="fas fa-folder-plus" />
-      </Button>
+      </StyledButton>
     </>
   );
 };
