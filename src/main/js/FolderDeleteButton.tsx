@@ -26,9 +26,11 @@ import { File, Repository } from "@scm-manager/ui-types";
 import { useTranslation } from "react-i18next";
 import styled from "styled-components";
 import FolderDeleteModal from "./FolderDeleteModal";
+import { Button } from "@scm-manager/ui-components";
 
-const Button = styled.span`
+const StyledButton = styled(Button)`
   width: 50px;
+
   &:hover {
     color: #33b2e8;
   }
@@ -59,13 +61,9 @@ const FolderDeleteButton: FC<Props> = ({ sources, revision, repository }) => {
           revision={revision}
         />
       ) : null}
-      <Button
-        className="button"
-        title={t("scm-manage-folder-plugin.delete.tooltip")}
-        onClick={() => setModalVisible(true)}
-      >
+      <StyledButton title={t("scm-manage-folder-plugin.delete.tooltip")} action={() => setModalVisible(true)}>
         <i className="fas fa-trash" />
-      </Button>
+      </StyledButton>
     </>
   );
 };
