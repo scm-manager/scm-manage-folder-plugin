@@ -27,6 +27,7 @@ import { useTranslation } from "react-i18next";
 import styled from "styled-components";
 import FolderCreateModal from "./FolderCreateModal";
 import { Button } from "@scm-manager/ui-components";
+import { useCreateFolder } from "./folders";
 
 const StyledButton = styled(Button)`
   width: 50px;
@@ -45,6 +46,7 @@ type Props = {
 const FolderCreateButton: FC<Props> = ({ sources, path, revision, repository }) => {
   const [t] = useTranslation("plugins");
   const [creationModalVisible, setCreationModalVisible] = useState(false);
+  const hook = useCreateFolder();
 
   if (!sources || !("createFolder" in sources._links)) {
     return null;
@@ -59,9 +61,15 @@ const FolderCreateButton: FC<Props> = ({ sources, path, revision, repository }) 
           path={path}
           revision={revision}
           onClose={() => setCreationModalVisible(false)}
+          hook={hook}
         />
       ) : null}
-      <StyledButton title={t("scm-manage-folder-plugin.create.tooltip")} action={() => setCreationModalVisible(true)}>
+      <StyledButton
+        title={t("scm-manage-folder-plugin.create.tooltip")}
+        action={() => setCreationModalVisible(true)}
+        loading={hook.isLoading}
+        disabled={hook.isLoading}
+      >
         <i className="fas fa-folder-plus" />
       </StyledButton>
     </>

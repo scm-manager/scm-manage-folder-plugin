@@ -23,60 +23,17 @@
  */
 import React, { FC, useRef, useState } from "react";
 import {
+  Button,
   ButtonGroup,
+  CommitAuthor,
+  ErrorNotification,
   InputField,
   Modal,
-  Textarea,
-  Button,
-  CommitAuthor,
-  apiClient,
-  ErrorNotification
+  Textarea
 } from "@scm-manager/ui-components";
 import { useTranslation } from "react-i18next";
-import { Changeset, File, Link, Repository } from "@scm-manager/ui-types";
-import { useQueryClient, useMutation } from "react-query";
-import { Commit } from "./types";
-import { createRedirectUrl } from "./createRedirectUrl";
-import { useHistory } from "react-router-dom";
-
-type CreateFolderRequest = {
-  repository: Repository;
-  sources: File;
-  path?: string;
-  commit: Commit;
-  folderName: string;
-};
-
-const useCreateFolder = () => {
-  const queryClient = useQueryClient();
-  const history = useHistory();
-  const { mutate, data, isLoading, error } = useMutation<Changeset, Error, CreateFolderRequest>(
-    ({ commit, folderName, sources }) => {
-      const createLink = (sources._links.createFolder as Link).href.replace("{path}", folderName);
-      return apiClient.post(createLink, commit).then(response => response.json());
-    },
-    {
-      onSuccess: async (changeset, { repository, path, folderName }) => {
-        await queryClient.invalidateQueries(["repository", repository.namespace, repository.name]);
-        history.push(
-          createRedirectUrl(
-            repository,
-            changeset,
-            `${path || ""}${!path || path.endsWith("/") ? "" : "/"}${folderName}`
-          )
-        );
-      }
-    }
-  );
-  return {
-    create: (repository: Repository, parent: File, folderName: string, commit: Commit, path?: string) => {
-      mutate({ repository, folderName, commit, sources: parent, path });
-    },
-    isLoading,
-    error,
-    changeset: data
-  };
-};
+import { File, Repository } from "@scm-manager/ui-types";
+import { useCreateFolder } from "./folders";
 
 type Props = {
   repository: Repository;
@@ -84,13 +41,13 @@ type Props = {
   path?: string;
   sources: File;
   onClose: () => void;
+  hook: ReturnType<typeof useCreateFolder>;
 };
 
-const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, repository }) => {
+const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, repository, hook }) => {
   const [t] = useTranslation("plugins");
   const [folderName, setFolderName] = useState("");
   const [commitMessage, setCommitMessage] = useState("");
-  const { isLoading, error, create } = useCreateFolder();
   const [folderNameError, setFolderNameError] = useState("");
   const initialFocusRef = useRef<HTMLInputElement>(null);
   const submitDisabled = !commitMessage || !folderName || !!folderNameError;
@@ -107,7 +64,7 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
   };
 
   const submit = () =>
-    create(
+    hook.create(
       repository,
       sources,
       folderName,
@@ -120,7 +77,7 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
 
   const body = (
     <>
-      {error ? <ErrorNotification error={error} /> : null}
+      {hook.error ? <ErrorNotification error={hook.error} /> : null}
       {revision ? (
         <InputField label={t("scm-manage-folder-plugin.create.branch.label")} value={revision} disabled={true} />
       ) : null}
@@ -133,7 +90,7 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
         label={t("scm-manage-folder-plugin.create.name.label")}
         value={folderName}
         onChange={event => updateFolderName(event.target.value)}
-        disabled={isLoading}
+        disabled={hook.isLoading}
         errorMessage={folderNameError && t(folderNameError)}
         validationError={!!folderNameError}
         onReturnPressed={() => !submitDisabled && submit()}
@@ -146,7 +103,7 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
         placeholder={t("scm-manage-folder-plugin.create.commit.placeholder")}
         onChange={message => setCommitMessage(message)}
         value={commitMessage}
-        disabled={isLoading}
+        disabled={hook.isLoading}
         onSubmit={() => !submitDisabled && submit()}
       />
     </>
@@ -154,10 +111,10 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
 
   const footer = (
     <ButtonGroup>
-      <Button action={onClose} disabled={isLoading}>
+      <Button action={onClose} disabled={hook.isLoading}>
         {t("scm-manage-folder-plugin.create.cancel.label")}
       </Button>
-      <Button action={submit} disabled={submitDisabled} loading={isLoading} color="primary">
+      <Button action={submit} disabled={submitDisabled || hook.isLoading} loading={hook.isLoading} color="primary">
         {t("scm-manage-folder-plugin.create.submit.label")}
       </Button>
     </ButtonGroup>

@@ -27,6 +27,7 @@ import { useTranslation } from "react-i18next";
 import styled from "styled-components";
 import FolderDeleteModal from "./FolderDeleteModal";
 import { Button } from "@scm-manager/ui-components";
+import { useDeleteFolder } from "./folders";
 
 const StyledButton = styled(Button)`
   width: 50px;
@@ -46,6 +47,7 @@ type Props = {
 const FolderDeleteButton: FC<Props> = ({ sources, revision, repository }) => {
   const [t] = useTranslation("plugins");
   const [modalVisible, setModalVisible] = useState(false);
+  const hook = useDeleteFolder();
 
   if (!sources || !("deleteFolder" in sources._links)) {
     return null;
@@ -59,9 +61,15 @@ const FolderDeleteButton: FC<Props> = ({ sources, revision, repository }) => {
           repository={repository}
           sources={sources}
           revision={revision}
+          hook={hook}
         />
       ) : null}
-      <StyledButton title={t("scm-manage-folder-plugin.delete.tooltip")} action={() => setModalVisible(true)}>
+      <StyledButton
+        title={t("scm-manage-folder-plugin.delete.tooltip")}
+        action={() => setModalVisible(true)}
+        loading={hook.isLoading}
+        disabled={hook.isLoading}
+      >
         <i className="fas fa-trash" />
       </StyledButton>
     </>

@@ -23,55 +23,9 @@
  */
 import React, { FC, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  apiClient,
-  Button,
-  ButtonGroup,
-  CommitAuthor,
-  ErrorNotification,
-  Modal,
-  Textarea
-} from "@scm-manager/ui-components";
-import { Changeset, File, Link, Repository } from "@scm-manager/ui-types";
-import { useHistory, useLocation } from "react-router-dom";
-import { Commit } from "./types";
-import { createRedirectUrl } from "./createRedirectUrl";
-import { useMutation } from "react-query";
-
-type DeleteFolderRequest = {
-  commit: Commit;
-  sources: File;
-  repository: Repository;
-  revision?: string;
-};
-
-const useDeleteFolder = () => {
-  const history = useHistory();
-  const location = useLocation();
-
-  const { mutate, data, isLoading, error } = useMutation<Changeset, Error, DeleteFolderRequest>(
-    ({ commit, sources }) => {
-      const link = (sources._links.deleteFolder as Link).href;
-      return apiClient.post(link, commit).then(response => response.json());
-    },
-    {
-      onSuccess: async (changeset, { repository, revision, sources }) => {
-        const filePath = location.pathname
-          .substr(0, location.pathname.length - sources.name.length - 1)
-          .split("/sources/" + revision)[1];
-        history.push(createRedirectUrl(repository, changeset, filePath));
-      }
-    }
-  );
-  return {
-    remove: (repository: Repository, parent: File, commit: Commit, revision?: string) => {
-      mutate({ repository, commit, sources: parent, revision });
-    },
-    isLoading,
-    error,
-    changeset: data
-  };
-};
+import { Button, ButtonGroup, CommitAuthor, ErrorNotification, Modal, Textarea } from "@scm-manager/ui-components";
+import { File, Repository } from "@scm-manager/ui-types";
+import { useDeleteFolder } from "./folders";
 
 type Props = {
   repository: Repository;
@@ -79,16 +33,16 @@ type Props = {
   path?: string;
   sources: File;
   onClose: () => void;
+  hook: ReturnType<typeof useDeleteFolder>;
 };
 
-const FolderDeleteModal: FC<Props> = ({ onClose, revision, repository, sources }) => {
+const FolderDeleteModal: FC<Props> = ({ onClose, revision, repository, sources, hook }) => {
   const [t] = useTranslation("plugins");
   const [commitMessage, setCommitMessage] = useState("");
-  const { remove, error, isLoading } = useDeleteFolder();
   const initialFocusRef = useRef<HTMLTextAreaElement>(null);
 
   const submit = () =>
-    remove(
+    hook.remove(
       repository,
       sources,
       {
@@ -100,14 +54,14 @@ const FolderDeleteModal: FC<Props> = ({ onClose, revision, repository, sources }
 
   const body = (
     <>
-      {error ? <ErrorNotification error={error} /> : null}
+      {hook.error ? <ErrorNotification error={hook.error} /> : null}
       <div className="mb-3">
         <CommitAuthor />
       </div>
       <Textarea
         placeholder={t("scm-manage-folder-plugin.delete.commit.placeholder")}
         onChange={event => setCommitMessage(event.target.value)}
-        disabled={isLoading}
+        disabled={hook.isLoading}
         onSubmit={() => !!commitMessage && submit()}
         ref={initialFocusRef}
       />
@@ -116,16 +70,12 @@ const FolderDeleteModal: FC<Props> = ({ onClose, revision, repository, sources }
 
   const footer = (
     <ButtonGroup>
-      <Button
-        label={t("scm-manage-folder-plugin.delete.cancel.label")}
-        action={onClose}
-        disabled={isLoading}
-      />
+      <Button label={t("scm-manage-folder-plugin.delete.cancel.label")} action={onClose} disabled={hook.isLoading} />
       <Button
         label={t("scm-manage-folder-plugin.delete.submit.label")}
         color="primary"
-        disabled={!commitMessage}
-        loading={isLoading}
+        disabled={!commitMessage || hook.isLoading}
+        loading={hook.isLoading}
         action={submit}
       />
     </ButtonGroup>
