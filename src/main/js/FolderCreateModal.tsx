@@ -70,7 +70,7 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
       folderName,
       {
         commitMessage,
-        branch: revision || ""
+        branch: decodeURIComponent(revision ?? "")
       },
       path
     );
@@ -79,7 +79,7 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
     <>
       {hook.error ? <ErrorNotification error={hook.error} /> : null}
       {revision ? (
-        <InputField label={t("scm-manage-folder-plugin.create.branch.label")} value={revision} disabled={true} />
+        <InputField label={t("scm-manage-folder-plugin.create.branch.label")} value={decodeURIComponent(revision ?? "")} disabled={true} />
       ) : null}
       <InputField
         label={t("scm-manage-folder-plugin.create.path.label")}

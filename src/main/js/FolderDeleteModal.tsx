@@ -47,7 +47,7 @@ const FolderDeleteModal: FC<Props> = ({ onClose, revision, repository, sources, 
       sources,
       {
         commitMessage,
-        branch: revision || ""
+        branch: decodeURIComponent(revision ?? "")
       },
       revision
     );
