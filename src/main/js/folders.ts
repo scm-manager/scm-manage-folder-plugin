@@ -26,7 +26,7 @@ import { Changeset, File, Link, Repository } from "@scm-manager/ui-types";
 import { useHistory, useLocation } from "react-router-dom";
 import { Commit } from "./types";
 import { createRedirectUrl } from "./createRedirectUrl";
-import {useMutation, useQueryClient} from "react-query";
+import { useMutation, useQueryClient } from "react-query";
 import { apiClient } from "@scm-manager/ui-components";
 
 type DeleteFolderRequest = {
@@ -39,6 +39,7 @@ type DeleteFolderRequest = {
 export const useDeleteFolder = () => {
   const history = useHistory();
   const location = useLocation();
+  const decodedLocationPathname = decodeURIComponent(location.pathname);
 
   const { mutate, data, isLoading, error } = useMutation<Changeset, Error, DeleteFolderRequest>(
     ({ commit, sources }) => {
@@ -47,8 +48,8 @@ export const useDeleteFolder = () => {
     },
     {
       onSuccess: async (changeset, { repository, revision, sources }) => {
-        const filePath = location.pathname
-          .substr(0, location.pathname.length - sources.name.length - 1)
+        const filePath = decodedLocationPathname
+          .substring(0, decodedLocationPathname.length - sources.name.length - 1)
           .split("/sources/" + revision)[1];
         history.push(createRedirectUrl(repository, changeset, filePath));
       }
@@ -87,7 +88,7 @@ export const useCreateFolder = () => {
           createRedirectUrl(
             repository,
             changeset,
-            `${path || ""}${!path || path.endsWith("/") ? "" : "/"}${folderName}`
+            `${path ?? ""}${!path || path.endsWith("/") ? "" : "/"}${folderName}`
           )
         );
       }

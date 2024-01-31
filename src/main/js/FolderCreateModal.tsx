@@ -88,8 +88,8 @@ const FolderCreateModal: FC<Props> = ({ sources, revision, path, onClose, reposi
       />
       <InputField
         label={t("scm-manage-folder-plugin.create.name.label")}
-        value={folderName}
-        onChange={event => updateFolderName(event.target.value)}
+        value={decodeURIComponent(folderName)}
+        onChange={event => updateFolderName(encodeURIComponent(event.target.value))}
         disabled={hook.isLoading}
         errorMessage={folderNameError && t(folderNameError)}
         validationError={!!folderNameError}
