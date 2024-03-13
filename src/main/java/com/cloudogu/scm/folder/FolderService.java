@@ -42,7 +42,7 @@ import sonia.scm.repository.api.RepositoryServiceFactory;
 import sonia.scm.util.ValidationUtil;
 
 import javax.annotation.CheckForNull;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 

@@ -38,7 +38,7 @@ import sonia.scm.repository.RepositoryManager;
 import sonia.scm.web.JsonMockHttpRequest;
 import sonia.scm.web.RestDispatcher;
 
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Date;

@@ -1,5 +1,9 @@
 {
   "scm-manage-folder-plugin": {
+    "upload":  {
+      "directory": "Experimental: Uploading folder structures",
+      "dirDescription": "This feature is only supported by chromium-based browser.\n In this mode, uploading must be done using drag-and-drop. The selection dialog when clicking is deactivated.\n Empty folders are created using marker files (.scmkeep)."
+    },
     "delete": {
       "tooltip": "Delete folder",
       "title": "Folder deletion",

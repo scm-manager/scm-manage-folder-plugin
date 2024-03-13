@@ -1,5 +1,9 @@
 {
   "scm-manage-folder-plugin": {
+    "upload":  {
+      "directory": "Experimentell: Hochladen von Ordner-Strukturen",
+      "dirDescription": "Diese Funktion wird nur von chromium-basierten Browsern unterstützt.\n In diesem Modus muss das Hochladen per Drag-&-Drop erfolgen. Der Auswahl-Dialog beim Klicken ist deaktiviert.\n Leere Ordner werden mithilfe von Marker-Dateien (.scmkeep) erzeugt."
+    },
     "delete": {
       "tooltip": "Ordner löschen",
       "title": "Ordner löschen",

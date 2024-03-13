@@ -22,11 +22,30 @@
  * SOFTWARE.
  */
 
-import { binder } from "@scm-manager/ui-extensions";
-import SourcesActionbar from "./SourcesActionbar";
-import React from "react";
-import createUploadExtension from "./FileUploadOptions";
+import React, { SetStateAction } from "react";
+import { Radio } from "@scm-manager/ui-components";
+import { droppedItemHierarchyProber } from "./upload";
 
-binder.bind("repos.sources.actionbar", SourcesActionbar, ({ sources }) => !sources || sources.directory);
-binder.bind("repos.sources.empty.actionbar", SourcesActionbar, ({ sources }) => !sources || sources.directory);
-binder.bind("editorPlugin.upload", createUploadExtension);
+const DIR_UPLOAD = "directory";
+
+const createUploadExtension = () => ({
+  renderOption: (uploadMode: string, setUploadMode: SetStateAction<any>, t: any) => (
+    <>
+      <Radio className="ml-2" checked={uploadMode === DIR_UPLOAD} onChange={() => setUploadMode(DIR_UPLOAD)} />
+      {t("scm-manage-folder-plugin.upload.directory")}
+      {uploadMode === DIR_UPLOAD ? (
+        <>
+          <br />
+          <br />
+          <span>{t("scm-manage-folder-plugin.upload.dirDescription")}</span>
+        </>
+      ) : null}
+    </>
+  ),
+  dropZoneOptions: (fileHandler: any) => ({
+    getFilesFromEvent: (event: any) => droppedItemHierarchyProber(event, fileHandler),
+    noClick: true
+  }),
+  uploadMode: DIR_UPLOAD
+});
+export default createUploadExtension;
