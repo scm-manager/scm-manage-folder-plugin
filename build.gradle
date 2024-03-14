@@ -27,7 +27,7 @@ plugins {
 }
 
 dependencies {
-  plugin "sonia.scm.plugins:scm-editor-plugin:3.0.1-SNAPSHOT"
+  plugin "sonia.scm.plugins:scm-editor-plugin:3.1.0"
 }
 
 scmPlugin {
