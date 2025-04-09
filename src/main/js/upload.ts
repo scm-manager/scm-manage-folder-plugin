@@ -23,11 +23,13 @@ export async function droppedItemHierarchyProber(e: any, fileHandler: any) {
   const filesData = await filesDataPromise;
 
   fileHandler(filesData);
+  const files = [];
   for (const folder of hierarchyDetails.emptyFolders) {
     let file = new File([""], ".scmkeep", { type: "text/plain" });
     file.path = folder.path + "/" + file.name;
-    fileHandler(file);
+    files.push(file);
   }
+  fileHandler(files);
   return { filesData, hierarchyDetails };
 }
 
@@ -38,7 +40,10 @@ async function probeFolders(event: any) {
     files: []
   };
 
-  if (!event.dataTransfer.items[0].getAsFileSystemHandle || !(event.dataTransfer.items[0].getAsFileSystemHandle instanceof Function)) {
+  if (
+    !event.dataTransfer.items[0].getAsFileSystemHandle ||
+    !(event.dataTransfer.items[0].getAsFileSystemHandle instanceof Function)
+  ) {
     // Feature not supported therefore abort
     return hierarchyDetails;
   }
