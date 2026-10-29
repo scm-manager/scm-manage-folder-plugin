@@ -4,10 +4,10 @@
   </a>
 </p>
 <h1 align="center">
-  scm-manage-folder-plugin
+  Manage Folder Plugin
 </h1>
 
-Create empty folders through the web interface.
+Manage folders through the web interface.
 
 ## Usage
 

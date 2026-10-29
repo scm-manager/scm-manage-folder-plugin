@@ -19,13 +19,13 @@ plugins {
 }
 
 dependencies {
-  plugin "sonia.scm.plugins:scm-editor-plugin:3.1.0"
+  plugin "sonia.scm.plugins:scm-editor-plugin:4.0.0-SNAPSHOT"
 }
 
 scmPlugin {
-  scmVersion = "3.6.0"
-  displayName = "Manage Folder Plugin"
-  description = "Manage folders through the web interface."
+  scmVersion = "4.0.0-SNAPSHOT"
+  displayName = "Manage Folder"
+  description = "Manage folders through the web interface"
 
   author = "Cloudogu GmbH"
   category = "Workflow"

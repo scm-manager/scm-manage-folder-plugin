@@ -43,22 +43,16 @@ describe("Redirect Url Tests", () => {
   });
 
   it("should remove start and ending slash from path", () => {
-    expect(createRedirectUrl(repository, changeset, "/path/")).toBe(
-      "/repo/scm/core/code/sources/42/path/"
-    );
+    expect(createRedirectUrl(repository, changeset, "/path/")).toBe("/repo/scm/core/code/sources/42/path/");
   });
 
   it("should keep slashes in path", () => {
-    expect(createRedirectUrl(repository, changeset, "a/b/c")).toBe(
-      "/repo/scm/core/code/sources/42/a%2Fb%2Fc/"
-    );
+    expect(createRedirectUrl(repository, changeset, "a/b/c")).toBe("/repo/scm/core/code/sources/42/a%2Fb%2Fc/");
   });
 
   it("should return only one slash for empty path", () => {
-    expect(createRedirectUrl(repository, changeset, "")).toBe(
-      "/repo/scm/core/code/sources/42/"
-    );
-  })
+    expect(createRedirectUrl(repository, changeset, "")).toBe("/repo/scm/core/code/sources/42/");
+  });
 
   it("should encode branch with slash", () => {
     const branchWithSlash: Branch = {
